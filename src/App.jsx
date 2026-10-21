@@ -1,21 +1,16 @@
-import { Route, Routes } from "react-router-dom";
-
-function SetupPage() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
-      <h1 className="text-4xl font-bold tracking-tight">HUNGRY HOUR</h1>
-      <p className="text-lg">Food Ordering and Delivery Platform</p>
-      <p className="text-sm text-gray-600">
-        Project setup completed successfully.
-      </p>
-    </main>
-  );
-}
+import { Navigate, Route, Routes } from "react-router-dom";
+import Login from "./pages/Login.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
+import Signup from "./pages/Signup.jsx";
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<SetupPage />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
