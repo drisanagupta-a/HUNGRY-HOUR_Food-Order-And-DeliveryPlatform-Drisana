@@ -7,6 +7,7 @@ import AuthLayout from "../components/auth/AuthLayout.jsx";
 import FormField from "../components/auth/FormField.jsx";
 import SocialLogin from "../components/auth/SocialLogin.jsx";
 import { signupSchema } from "../schemas/authSchema.js";
+import { signUp } from "../services/authService.js";
 
 export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
@@ -27,10 +28,19 @@ export default function Signup() {
     },
   });
 
-  const handleSignup = () => {
-    setFormMessage(
-      "Your details passed validation, but account creation is not connected to a backend. No request was sent.",
-    );
+  const handleSignup = async ({ fullName, email, password }) => {
+    setFormMessage("");
+
+    try {
+      const result = await signUp(fullName, email, password);
+      setFormMessage(result.message || "Your account was created.");
+    } catch (error) {
+      setFormMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to create your account. Please try again.",
+      );
+    }
   };
 
   return (
@@ -84,7 +94,7 @@ export default function Signup() {
           }
         />
         <p className="-mt-2 text-xs text-[#746C61]">
-          Include an uppercase letter, a lowercase letter, and a number.
+          Use 8 to 128 characters.
         </p>
 
         <FormField
@@ -151,7 +161,7 @@ export default function Signup() {
           disabled={isSubmitting}
           className="w-full rounded-xl bg-[#D1011F] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#B9001B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Sign Up
+          {isSubmitting ? "Creating account..." : "Sign Up"}
         </button>
       </form>
 

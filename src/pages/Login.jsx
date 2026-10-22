@@ -2,15 +2,20 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import AuthLayout from "../components/auth/AuthLayout.jsx";
 import FormField from "../components/auth/FormField.jsx";
 import SocialLogin from "../components/auth/SocialLogin.jsx";
 import { loginSchema } from "../schemas/authSchema.js";
+import { getMyProfile, logIn } from "../services/authService.js";
 
 export default function Login() {
+  const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
-  const [formMessage, setFormMessage] = useState("");
+  const [formMessage, setFormMessage] = useState(
+    () => searchParams.get("error") || "",
+  );
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -20,10 +25,18 @@ export default function Login() {
     defaultValues: { email: "", password: "", rememberMe: false },
   });
 
-  const handleLogin = () => {
-    setFormMessage(
-      "Your details passed validation, but sign-in is not connected to a backend. No request was sent.",
-    );
+  const handleLogin = async ({ email, password }) => {
+    setFormMessage("");
+
+    try {
+      await logIn(email, password);
+      await getMyProfile();
+      navigate("/home", { replace: true });
+    } catch (error) {
+      setFormMessage(
+        error instanceof Error ? error.message : "Unable to log in. Please try again.",
+      );
+    }
   };
 
   return (
@@ -96,7 +109,7 @@ export default function Login() {
           disabled={isSubmitting}
           className="w-full rounded-xl bg-[#D1011F] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#B9001B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Log In
+          {isSubmitting ? "Logging in..." : "Log In"}
         </button>
       </form>
 
