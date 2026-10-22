@@ -27,7 +27,7 @@ export default function Login() {
   };
 
   return (
-    <AuthLayout eyebrow="Welcome back" title="Sign in">
+    <AuthLayout eyebrow="Welcome back" title="Log in">
       <form
         className="space-y-5"
         onSubmit={handleSubmit(handleLogin, () => setFormMessage(""))}
@@ -96,7 +96,7 @@ export default function Login() {
           disabled={isSubmitting}
           className="w-full rounded-xl bg-[#D1011F] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#B9001B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Sign In
+          Log In
         </button>
       </form>
 

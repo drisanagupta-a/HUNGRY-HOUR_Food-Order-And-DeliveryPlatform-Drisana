@@ -151,7 +151,7 @@ export default function Signup() {
           disabled={isSubmitting}
           className="w-full rounded-xl bg-[#D1011F] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#B9001B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Create Account
+          Sign Up
         </button>
       </form>
 
