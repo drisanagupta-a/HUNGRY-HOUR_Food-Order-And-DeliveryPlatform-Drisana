@@ -1,5 +1,13 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, "");
 
+export class ApiError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 async function requestJson(path, method = "GET", data, refreshOnUnauthorized = false) {
   if (!API_BASE_URL) {
     throw new Error("Set VITE_API_BASE_URL before using authentication.");
@@ -46,8 +54,9 @@ async function requestJson(path, method = "GET", data, refreshOnUnauthorized = f
   if (!response.ok) {
     const backendMessage =
       typeof responseData?.message === "string" ? responseData.message : "";
-    throw new Error(
+    throw new ApiError(
       backendMessage || `The backend returned an error (${response.status}).`,
+      response.status,
     );
   }
 
@@ -56,6 +65,10 @@ async function requestJson(path, method = "GET", data, refreshOnUnauthorized = f
 
 export function logIn(email, password) {
   return requestJson("/api/auth/login", "POST", { email, password });
+}
+
+export function logOut() {
+  return requestJson("/api/auth/logout", "POST");
 }
 
 export function signUp(name, email, password) {

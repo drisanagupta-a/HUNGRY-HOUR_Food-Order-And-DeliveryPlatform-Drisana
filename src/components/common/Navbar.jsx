@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Heart, ShoppingBag, UserRound, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Heart, LogOut, ShoppingBag, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ApiError, logOut } from "../../services/authService.js";
 import SearchBar from "./SearchBar.jsx";
 
 export default function Navbar({
@@ -11,7 +12,33 @@ export default function Navbar({
   onFavoritesClick,
 }) {
   const [cartIsOpen, setCartIsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
+  const navigate = useNavigate();
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+  async function handleLogout() {
+    setIsLoggingOut(true);
+    setLogoutError("");
+
+    try {
+      await logOut();
+      navigate("/login", { replace: true });
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      setLogoutError(
+        error instanceof Error
+          ? error.message
+          : "Unable to log out. Please try again.",
+      );
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }
 
   return (
     <header className="site-header">
@@ -118,10 +145,20 @@ export default function Navbar({
               </div>
             )}
           </div>
-          <Link className="profile-link" to="/login">
-            <UserRound size={18} aria-hidden="true" />
-            <span>Log in</span>
-          </Link>
+          <button
+            className="profile-link"
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            <LogOut size={18} aria-hidden="true" />
+            <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
+          </button>
+          {logoutError && (
+            <p className="max-w-40 text-xs text-[#D1011F]" role="alert">
+              {logoutError}
+            </p>
+          )}
         </div>
       </div>
     </header>

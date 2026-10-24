@@ -7,7 +7,7 @@ import AuthLayout from "../components/auth/AuthLayout.jsx";
 import FormField from "../components/auth/FormField.jsx";
 import SocialLogin from "../components/auth/SocialLogin.jsx";
 import { loginSchema } from "../schemas/authSchema.js";
-import { getMyProfile, logIn } from "../services/authService.js";
+import { logIn } from "../services/authService.js";
 
 export default function Login() {
   const [searchParams] = useSearchParams();
@@ -30,7 +30,6 @@ export default function Login() {
 
     try {
       await logIn(email, password);
-      await getMyProfile();
       navigate("/home", { replace: true });
     } catch (error) {
       setFormMessage(
