@@ -68,7 +68,7 @@ Review prices and proceed to checkout.
 Handle supported payment states.
 View order history and delivery status.
 Receive relevant food recommendations.
-## 10. Project Workflow
+##  Project Workflow
 
 ### Authentication Flow
 
@@ -114,4 +114,3 @@ flowchart TD
     H --> I["React Frontend"]
 ```
 
-*Note: Food ordering, payment, delivery tracking, and ML recommendations represent the intended workflow. Mark them as completed only after implementation and integration testing.*
