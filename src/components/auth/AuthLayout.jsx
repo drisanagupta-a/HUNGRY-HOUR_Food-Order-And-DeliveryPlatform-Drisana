@@ -8,7 +8,7 @@ import oliveLeavesRight from "../../assets/Layer_1 (2).png";
 import oliveLeavesCorner from "../../assets/Layer_1 (3).png";
 import hungryHourLogo from "../../assets/Group 9.svg";
 import loginHeading from "../../assets/LOG IN.svg";
-import signupHeading from "../../assets/SIGN UP.png";
+import signupHeading from "../../assets/signup.svg";
 
 export default function AuthLayout({ eyebrow, title, children }) {
   const headingAsset =

@@ -141,6 +141,14 @@ export function signUp(name, email, password) {
   return requestJson("/api/auth/signup", "POST", { name, email, password });
 }
 
+export function verifyOtp(email, token) {
+  return requestJson("/api/auth/verify-otp", "POST", { email, token });
+}
+
+export function resendOtp(email) {
+  return requestJson("/api/auth/resend-otp", "POST", { email });
+}
+
 export function requestPasswordReset(email) {
   return requestJson("/api/auth/forgot-password", "POST", { email });
 }

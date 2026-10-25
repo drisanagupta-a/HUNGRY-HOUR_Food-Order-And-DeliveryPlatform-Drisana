@@ -2,7 +2,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/auth/AuthLayout.jsx";
 import FormField from "../components/auth/FormField.jsx";
 import SocialLogin from "../components/auth/SocialLogin.jsx";
@@ -13,6 +13,7 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formMessage, setFormMessage] = useState("");
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -32,8 +33,8 @@ export default function Signup() {
     setFormMessage("");
 
     try {
-      const result = await signUp(fullName, email, password);
-      setFormMessage(result.message || "Your account was created.");
+      await signUp(fullName, email, password);
+      navigate("/verify-otp", { state: { email }, replace: true });
     } catch (error) {
       setFormMessage(
         error instanceof Error

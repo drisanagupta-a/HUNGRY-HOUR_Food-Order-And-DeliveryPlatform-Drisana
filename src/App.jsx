@@ -4,6 +4,7 @@ import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import Signup from "./pages/Signup.jsx";
+import VerifyOtp from "./pages/VerifyOtp.jsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 import Intro from "./pages/Intro.jsx";
 
@@ -38,6 +39,7 @@ export default function App() {
         }
       />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/verify-otp" element={<VerifyOtp />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/update-password" element={<ResetPassword />} />
       <Route

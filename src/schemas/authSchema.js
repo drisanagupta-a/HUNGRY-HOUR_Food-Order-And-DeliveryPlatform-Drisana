@@ -38,6 +38,12 @@ export const signupSchema = z
     path: ["confirmPassword"],
   });
 
+export const otpSchema = z.object({
+  token: z
+    .string()
+    .regex(/^\d{6}$/, "Enter the six-digit code sent to your email."),
+});
+
 export const resetPasswordSchema = z.object({
   email: emailSchema,
 });
