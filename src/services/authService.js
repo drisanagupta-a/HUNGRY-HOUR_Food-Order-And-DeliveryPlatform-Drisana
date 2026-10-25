@@ -8,15 +8,43 @@ export class ApiError extends Error {
   }
 }
 
-async function requestJson(path, method = "GET", data, refreshOnUnauthorized = false) {
+async function requestJson(
+  path,
+  method = "GET",
+  data,
+  refreshOnUnauthorized = false,
+  timeoutMs = 0,
+  deadlineAt = null,
+) {
   if (!API_BASE_URL) {
     throw new Error("Set VITE_API_BASE_URL before using authentication.");
   }
+
+  const requestDeadline =
+    deadlineAt ?? (timeoutMs > 0 ? Date.now() + timeoutMs : null);
+  const remainingMs = requestDeadline ? requestDeadline - Date.now() : 0;
+
+  if (requestDeadline && remainingMs <= 0) {
+    throw new Error("The backend took too long to respond. Please try again.");
+  }
+
+  const controller = requestDeadline ? new AbortController() : null;
+  let requestTimedOut = false;
+  const timeoutId = controller
+    ? setTimeout(() => {
+        requestTimedOut = true;
+        controller.abort();
+      }, remainingMs)
+    : null;
 
   const options = {
     method,
     credentials: "include",
   };
+
+  if (controller) {
+    options.signal = controller.signal;
+  }
 
   if (data) {
     options.headers = { "Content-Type": "application/json" };
@@ -28,6 +56,12 @@ async function requestJson(path, method = "GET", data, refreshOnUnauthorized = f
   try {
     response = await fetch(`${API_BASE_URL}${path}`, options);
   } catch (error) {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    if (requestTimedOut) {
+      throw new Error("The backend took too long to respond. Please try again.");
+    }
     throw new Error(
       `Could not reach the backend. Check that it is available and allows this website through CORS. ${
         error instanceof Error ? error.message : ""
@@ -36,11 +70,43 @@ async function requestJson(path, method = "GET", data, refreshOnUnauthorized = f
   }
 
   if (response.status === 401 && refreshOnUnauthorized) {
-    await requestJson("/api/auth/refresh", "POST");
-    return requestJson(path, method, data);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    await requestJson(
+      "/api/auth/refresh",
+      "POST",
+      undefined,
+      false,
+      timeoutMs,
+      requestDeadline,
+    );
+    return requestJson(
+      path,
+      method,
+      data,
+      false,
+      timeoutMs,
+      requestDeadline,
+    );
   }
 
-  const responseText = await response.text();
+  let responseText;
+  try {
+    responseText = await response.text();
+  } catch (error) {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    if (requestTimedOut) {
+      throw new Error("The backend took too long to respond. Please try again.");
+    }
+    throw error;
+  }
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+  }
+
   let responseData = {};
 
   if (responseText) {
@@ -83,6 +149,53 @@ export function updatePassword(newPassword) {
   return requestJson("/api/account/password", "PUT", { newPassword }, true);
 }
 
+const PUBLIC_HEALTH_PATH = import.meta.env.VITE_PUBLIC_HEALTH_PATH?.trim();
+export const hasConfiguredPublicHealthPath = Boolean(PUBLIC_HEALTH_PATH);
+
+export function checkConfiguredPublicEndpoint(timeoutMs = 12_000) {
+  if (!API_BASE_URL || !PUBLIC_HEALTH_PATH) {
+    return null;
+  }
+
+  const healthPath = PUBLIC_HEALTH_PATH.startsWith("/")
+    ? PUBLIC_HEALTH_PATH
+    : `/${PUBLIC_HEALTH_PATH}`;
+  const controller = new AbortController();
+  let requestTimedOut = false;
+  const timeoutId = setTimeout(() => {
+    requestTimedOut = true;
+    controller.abort();
+  }, timeoutMs);
+
+  return fetch(`${API_BASE_URL}${healthPath}`, {
+    method: "GET",
+    credentials: "omit",
+    signal: controller.signal,
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new ApiError(
+          `The public backend check returned an error (${response.status}).`,
+          response.status,
+        );
+      }
+    })
+    .catch((error) => {
+      if (requestTimedOut) {
+        throw new Error("The public backend check timed out.");
+      }
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new Error(
+        `Could not reach the configured public backend endpoint. ${
+          error instanceof Error ? error.message : ""
+        }`.trim(),
+      );
+    })
+    .finally(() => clearTimeout(timeoutId));
+}
+
 export function getMyProfile() {
-  return requestJson("/api/profiles/me", "GET", undefined, true);
+  return requestJson("/api/profiles/me", "GET", undefined, true, 120_000);
 }

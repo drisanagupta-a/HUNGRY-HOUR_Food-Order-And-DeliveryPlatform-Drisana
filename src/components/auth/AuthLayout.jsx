@@ -6,8 +6,18 @@ import oliveLeaves from "../../assets/Layer_1.png";
 import oliveLeavesDiagonal from "../../assets/Layer_1 (1).png";
 import oliveLeavesRight from "../../assets/Layer_1 (2).png";
 import oliveLeavesCorner from "../../assets/Layer_1 (3).png";
+import hungryHourLogo from "../../assets/Group 9.svg";
+import loginHeading from "../../assets/LOG IN.svg";
+import signupHeading from "../../assets/SIGN UP.png";
 
 export default function AuthLayout({ eyebrow, title, children }) {
+  const headingAsset =
+    title === "Log in"
+      ? loginHeading
+      : title === "Sign up"
+        ? signupHeading
+        : null;
+
   return (
     <main className="min-h-screen overflow-hidden bg-[#FDE4BF] text-[#000000]">
       <div className="mx-auto grid min-h-screen max-w-[1440px] lg:grid-cols-2">
@@ -40,9 +50,11 @@ export default function AuthLayout({ eyebrow, title, children }) {
             className="absolute -bottom-8 right-0 z-0 w-36 rotate-180 sm:w-48 lg:w-56"
           />
 
-          <p className="relative z-10 px-6 pt-7 font-serif text-3xl font-bold tracking-wide text-[#D1011F] sm:px-10 sm:pt-10 sm:text-4xl lg:px-14 lg:pt-12">
-            HUNGRY HOUR
-          </p>
+          <img
+            src={hungryHourLogo}
+            alt="HUNGRY HOUR"
+            className="relative z-10 ml-6 mt-7 h-auto w-52 sm:ml-10 sm:mt-10 sm:w-60 lg:ml-14 lg:mt-12 lg:w-64"
+          />
 
           <img
             src={orangeDrink}
@@ -85,7 +97,15 @@ export default function AuthLayout({ eyebrow, title, children }) {
               className="mb-7 mt-2 text-[clamp(3rem,6.5vw,62.83px)] font-normal uppercase leading-[1.05] text-[#000000]"
               style={{ fontFamily: '"Maiden Orange", Georgia, serif' }}
             >
-              {title}
+              {headingAsset ? (
+                <img
+                  src={headingAsset}
+                  alt={title}
+                  className="block h-auto w-[min(100%,260px)]"
+                />
+              ) : (
+                title
+              )}
             </h1>
             {children}
           </div>

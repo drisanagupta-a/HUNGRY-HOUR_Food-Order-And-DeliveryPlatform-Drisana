@@ -2,6 +2,10 @@ HUNGRY HOUR — Food Ordering & Delivery Platform
 
 HUNGRY HOUR is a food ordering and delivery platform designed to help users discover restaurants, explore menus, and order food through a responsive web interface. The project integrates a React frontend with a Spring Boot backend, Supabase authentication, and a planned ML-based food recommendation feature.
 
+### Intro splash and backend availability check
+
+Opening `/` plays the HUNGRY HOUR burger intro and then navigates to `/login`. If the backend developer provides a public, unauthenticated GET endpoint, set its exact path in `VITE_PUBLIC_HEALTH_PATH`. The splash calls only that configured path using `VITE_API_BASE_URL`; if it is unset, no wake-up request is made. The splash proceeds on its own schedule whether the request succeeds, fails, or times out, and does not indicate backend health. Direct visits to `/login` do not play the intro.
+
 **Completed frontend work:
 React application setup and authentication pages.
 Signup, login, forgot-password, and update-password interfaces.
