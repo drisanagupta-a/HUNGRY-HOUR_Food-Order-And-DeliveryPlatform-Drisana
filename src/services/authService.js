@@ -157,9 +157,21 @@ export function checkConfiguredPublicEndpoint(timeoutMs = 12_000) {
     return null;
   }
 
-  const healthPath = PUBLIC_HEALTH_PATH.startsWith("/")
-    ? PUBLIC_HEALTH_PATH
-    : `/${PUBLIC_HEALTH_PATH}`;
+  const healthPath = `/${PUBLIC_HEALTH_PATH.split("/").filter(Boolean).join("/")}`;
+  let healthUrl;
+
+  try {
+    healthUrl = new URL(healthPath, API_BASE_URL);
+  } catch (error) {
+    return Promise.reject(
+      new Error(
+        `Could not construct the configured public backend URL. ${
+          error instanceof Error ? error.message : ""
+        }`.trim(),
+      ),
+    );
+  }
+
   const controller = new AbortController();
   let requestTimedOut = false;
   const timeoutId = setTimeout(() => {
@@ -167,7 +179,7 @@ export function checkConfiguredPublicEndpoint(timeoutMs = 12_000) {
     controller.abort();
   }, timeoutMs);
 
-  return fetch(`${API_BASE_URL}${healthPath}`, {
+  return fetch(healthUrl, {
     method: "GET",
     credentials: "omit",
     signal: controller.signal,
