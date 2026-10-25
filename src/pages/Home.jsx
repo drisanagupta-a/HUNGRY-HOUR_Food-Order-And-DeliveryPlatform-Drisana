@@ -59,12 +59,16 @@ const deliverySteps = [
   },
 ];
 
-export default function Home() {
+export default function Home({
+  cartItems,
+  onAddToCart,
+  isDevelopmentPreview = false,
+}) {
+  const previewEnabled = import.meta.env.DEV && isDevelopmentPreview;
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [favorites, setFavorites] = useState([]);
   const [showFavorites, setShowFavorites] = useState(false);
-  const [cartItems, setCartItems] = useState([]);
 
   const search = searchText.trim().toLowerCase();
   const matchingRestaurants = mockRestaurants.filter((restaurant) => {
@@ -101,22 +105,6 @@ export default function Home() {
     );
   }
 
-  function addToCart(dish) {
-    setCartItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.id === dish.id);
-
-      if (existingItem) {
-        return currentItems.map((item) =>
-          item.id === dish.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
-        );
-      }
-
-      return [...currentItems, { ...dish, quantity: 1 }];
-    });
-  }
-
   function selectCategory(category) {
     setSelectedCategory(category);
     setShowFavorites(false);
@@ -129,6 +117,8 @@ export default function Home() {
         setSearchText={setSearchText}
         favoriteCount={favorites.length}
         cartItems={cartItems}
+        homePath={previewEnabled ? "/dev-dashboard-preview" : "/home"}
+        showLogout={!previewEnabled}
         onFavoritesClick={() => {
           setShowFavorites((showingFavorites) => !showingFavorites);
           document.getElementById("restaurants")?.scrollIntoView({
@@ -185,6 +175,11 @@ export default function Home() {
           restaurants={matchingRestaurants}
           favorites={favorites}
           showFavorites={showFavorites}
+          detailsBasePath={
+            previewEnabled
+              ? "/dev-dashboard-preview/restaurants"
+              : "/restaurants"
+          }
           onToggleFavorite={toggleFavorite}
           onClearFilters={() => {
             setSearchText("");
@@ -195,7 +190,7 @@ export default function Home() {
 
         <PopularDishes
           dishes={matchingDishes}
-          onAddToCart={addToCart}
+          onAddToCart={onAddToCart}
           onClearFilters={() => {
             setSearchText("");
             setSelectedCategory("All");

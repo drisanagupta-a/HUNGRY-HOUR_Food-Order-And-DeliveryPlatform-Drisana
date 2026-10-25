@@ -1,4 +1,4 @@
-import { Heart, Star } from "lucide-react";
+import RestaurantCard from "../restaurant/RestaurantCard.jsx";
 
 export default function RestaurantSection({
   restaurants,
@@ -6,6 +6,7 @@ export default function RestaurantSection({
   showFavorites,
   onToggleFavorite,
   onClearFilters,
+  detailsBasePath = "/restaurants",
 }) {
   return (
     <section className="home-section restaurant-section" id="restaurants">
@@ -24,53 +25,13 @@ export default function RestaurantSection({
             const isFavorite = favorites.includes(restaurant.id);
 
             return (
-              <article className="restaurant-card" key={restaurant.id}>
-                <div className="restaurant-image-wrap">
-                  <img
-                    className="restaurant-image"
-                    src={restaurant.image}
-                    alt={`${restaurant.name} food`}
-                    loading="lazy"
-                  />
-                  <span className="restaurant-badge">{restaurant.badge}</span>
-                  <button
-                    className={`favorite-button${isFavorite ? " is-favorite" : ""}`}
-                    type="button"
-                    onClick={() => onToggleFavorite(restaurant.id)}
-                    aria-label={
-                      isFavorite
-                        ? `Remove ${restaurant.name} from favorites`
-                        : `Add ${restaurant.name} to favorites`
-                    }
-                    aria-pressed={isFavorite}
-                  >
-                    <Heart
-                      size={18}
-                      fill={isFavorite ? "currentColor" : "none"}
-                      aria-hidden="true"
-                    />
-                  </button>
-                </div>
-                <div className="restaurant-card-copy">
-                  <div className="restaurant-title-row">
-                    <h3>{restaurant.name}</h3>
-                    <span className="rating-pill">
-                      <Star size={13} fill="currentColor" aria-hidden="true" />
-                      {restaurant.rating}
-                    </span>
-                  </div>
-                  <p className="restaurant-cuisine">{restaurant.cuisine}</p>
-                  <div className="restaurant-meta">
-                    <span>{restaurant.time}</span>
-                    <i aria-hidden="true">·</i>
-                    <span>
-                      {restaurant.fee === 0
-                        ? "Free delivery"
-                        : `₹${restaurant.fee} delivery`}
-                    </span>
-                  </div>
-                </div>
-              </article>
+              <RestaurantCard
+                key={restaurant.id}
+                restaurant={restaurant}
+                isFavorite={isFavorite}
+                onToggleFavorite={onToggleFavorite}
+                detailsBasePath={detailsBasePath}
+              />
             );
           })}
         </div>
