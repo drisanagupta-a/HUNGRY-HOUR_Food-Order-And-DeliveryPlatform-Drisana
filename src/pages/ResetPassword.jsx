@@ -53,7 +53,7 @@ function ForgotPasswordForm() {
   };
 
   return (
-    <AuthLayout eyebrow="Account recovery" title="Reset password">
+    <AuthLayout eyebrow="FORGOT PASSWORD?" title="Reset password">
       <form
         className="space-y-5"
         onSubmit={handleSubmit(handleResetRequest, () => setFormMessage(""))}
