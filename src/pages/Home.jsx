@@ -59,6 +59,57 @@ const deliverySteps = [
   },
 ];
 
+const sortOptions = [
+  { value: "recommended", label: "Recommended" },
+  { value: "price-asc", label: "Price: Low to High" },
+  { value: "price-desc", label: "Price: High to Low" },
+  { value: "rating-desc", label: "Rating: High to Low" },
+  { value: "delivery-asc", label: "Delivery Time: Fastest First" },
+];
+
+function normalizeSearchText(value) {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function includesSearchTerm(values, search) {
+  return values.some(
+    (value) =>
+      typeof value === "string" &&
+      normalizeSearchText(value).includes(search),
+  );
+}
+
+function parseDeliveryMinutes(value) {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const minutes = value.match(/\d+/);
+  return minutes ? Number(minutes[0]) : undefined;
+}
+
+function sortByValue(items, getValue, direction = 1) {
+  return [...items]
+    .map((item, index) => ({ item, index, value: getValue(item) }))
+    .sort((left, right) => {
+      const leftMissing = !Number.isFinite(left.value);
+      const rightMissing = !Number.isFinite(right.value);
+
+      if (leftMissing && rightMissing) {
+        return left.index - right.index;
+      }
+      if (leftMissing) {
+        return 1;
+      }
+      if (rightMissing) {
+        return -1;
+      }
+
+      return direction * (left.value - right.value) || left.index - right.index;
+    })
+    .map(({ item }) => item);
+}
+
 export default function Home({
   cartItems,
   onAddToCart,
@@ -67,35 +118,113 @@ export default function Home({
   const previewEnabled = import.meta.env.DEV && isDevelopmentPreview;
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [sortBy, setSortBy] = useState("recommended");
   const [favorites, setFavorites] = useState([]);
   const [showFavorites, setShowFavorites] = useState(false);
 
-  const search = searchText.trim().toLowerCase();
-  const matchingRestaurants = mockRestaurants.filter((restaurant) => {
+  const search = normalizeSearchText(searchText);
+  const matchingDishes = mockDishes.filter((dish) => {
+    const restaurant = mockRestaurants.find(
+      (item) => item.id === dish.restaurantId,
+    );
     const matchesCategory =
       selectedCategory === "All" ||
-      restaurant.categories.includes(selectedCategory);
+      includesSearchTerm(
+        [
+          dish.category,
+          ...(restaurant?.categories ?? []),
+          restaurant?.cuisine,
+        ],
+        normalizeSearchText(selectedCategory),
+      );
     const matchesSearch =
       !search ||
-      `${restaurant.name} ${restaurant.cuisine} ${restaurant.categories.join(" ")}`
-        .toLowerCase()
-        .includes(search);
+      includesSearchTerm(
+        [
+          dish.name,
+          dish.restaurant,
+          dish.category,
+          dish.description,
+          restaurant?.name,
+          restaurant?.cuisine,
+          ...(restaurant?.categories ?? []),
+        ],
+        search,
+      );
+
+    return matchesCategory && matchesSearch;
+  });
+  const matchingRestaurants = mockRestaurants.filter((restaurant) => {
+    const restaurantDishes = mockDishes.filter(
+      (dish) => dish.restaurantId === restaurant.id,
+    );
+    const matchesCategory =
+      selectedCategory === "All" ||
+      restaurant.categories.includes(selectedCategory) ||
+      normalizeSearchText(restaurant.cuisine).includes(
+        normalizeSearchText(selectedCategory),
+      );
+    const matchesSearch =
+      !search ||
+      includesSearchTerm(
+        [
+          restaurant.name,
+          restaurant.cuisine,
+          ...restaurant.categories,
+          ...restaurantDishes.flatMap((dish) => [
+            dish.name,
+            dish.category,
+            dish.description,
+          ]),
+        ],
+        search,
+      );
     const matchesFavorites =
       !showFavorites || favorites.includes(restaurant.id);
 
     return matchesCategory && matchesSearch && matchesFavorites;
   });
-  const matchingDishes = mockDishes.filter((dish) => {
-    const matchesCategory =
-      selectedCategory === "All" || dish.category === selectedCategory;
-    const matchesSearch =
-      !search ||
-      `${dish.name} ${dish.restaurant} ${dish.category}`
-        .toLowerCase()
-        .includes(search);
 
-    return matchesCategory && matchesSearch;
-  });
+  const dishSorters = {
+    "price-asc": (dish) => dish.price,
+    "price-desc": (dish) => dish.price,
+    "rating-desc": (dish) => Number.parseFloat(dish.rating),
+    "delivery-asc": (dish) => {
+      const restaurant = mockRestaurants.find(
+        (item) => item.id === dish.restaurantId,
+      );
+      return parseDeliveryMinutes(restaurant?.time);
+    },
+  };
+  const restaurantSorters = {
+    "price-asc": (restaurant) => {
+      const prices = mockDishes
+        .filter((dish) => dish.restaurantId === restaurant.id)
+        .map((dish) => dish.price)
+        .filter((price) => Number.isFinite(price));
+      return prices.length ? Math.min(...prices) : undefined;
+    },
+    "price-desc": (restaurant) => {
+      const prices = mockDishes
+        .filter((dish) => dish.restaurantId === restaurant.id)
+        .map((dish) => dish.price)
+        .filter((price) => Number.isFinite(price));
+      return prices.length ? Math.min(...prices) : undefined;
+    },
+    "rating-desc": (restaurant) => Number.parseFloat(restaurant.rating),
+    "delivery-asc": (restaurant) => parseDeliveryMinutes(restaurant.time),
+  };
+  const sortDirection = sortBy === "price-desc" ? -1 : 1;
+  const sortedDishes = dishSorters[sortBy]
+    ? sortByValue(matchingDishes, dishSorters[sortBy], sortDirection)
+    : matchingDishes;
+  const sortedRestaurants = restaurantSorters[sortBy]
+    ? sortByValue(
+        matchingRestaurants,
+        restaurantSorters[sortBy],
+        sortDirection,
+      )
+    : matchingRestaurants;
 
   function toggleFavorite(restaurantId) {
     setFavorites((currentFavorites) =>
@@ -107,6 +236,13 @@ export default function Home({
 
   function selectCategory(category) {
     setSelectedCategory(category);
+    setShowFavorites(false);
+  }
+
+  function clearFilters() {
+    setSearchText("");
+    setSelectedCategory("All");
+    setSortBy("recommended");
     setShowFavorites(false);
   }
 
@@ -171,8 +307,34 @@ export default function Home({
           </div>
         </section>
 
+        <section
+          className="home-section results-toolbar"
+          aria-label="Search results"
+        >
+          <div className="results-counts" aria-live="polite">
+            <strong>{sortedRestaurants.length}</strong>{" "}
+            {sortedRestaurants.length === 1 ? "restaurant" : "restaurants"}
+            <span aria-hidden="true">·</span>
+            <strong>{sortedDishes.length}</strong>{" "}
+            {sortedDishes.length === 1 ? "dish" : "dishes"}
+          </div>
+          <label className="sort-control">
+            <span>Sort by</span>
+            <select
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </section>
+
         <RestaurantSection
-          restaurants={matchingRestaurants}
+          restaurants={sortedRestaurants}
           favorites={favorites}
           showFavorites={showFavorites}
           detailsBasePath={
@@ -181,20 +343,13 @@ export default function Home({
               : "/restaurants"
           }
           onToggleFavorite={toggleFavorite}
-          onClearFilters={() => {
-            setSearchText("");
-            setSelectedCategory("All");
-            setShowFavorites(false);
-          }}
+          onClearFilters={clearFilters}
         />
 
         <PopularDishes
-          dishes={matchingDishes}
+          dishes={sortedDishes}
           onAddToCart={onAddToCart}
-          onClearFilters={() => {
-            setSearchText("");
-            setSelectedCategory("All");
-          }}
+          onClearFilters={clearFilters}
         />
 
         <section className="how-section" id="help">

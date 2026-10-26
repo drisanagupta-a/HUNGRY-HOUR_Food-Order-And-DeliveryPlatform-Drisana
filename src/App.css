@@ -131,8 +131,19 @@
   width: clamp(190px, 20vw, 265px);
 }
 
+.food-search-container {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.hero-search-wrap .food-search-container {
+  flex: 1;
+}
+
 .food-search {
   display: flex;
+  width: 100%;
   min-width: 0;
   height: 54px;
   align-items: center;
@@ -166,6 +177,36 @@
 
 .food-search input::-webkit-search-cancel-button {
   cursor: pointer;
+}
+
+.food-search-container.has-search-value .food-search input {
+  padding-right: 22px;
+}
+
+.food-search-clear {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #887e72;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.food-search-clear:hover {
+  background: #f8efe2;
+  color: var(--food-red);
+}
+
+.food-search-clear:focus-visible {
+  outline: 2px solid var(--food-red);
+  outline-offset: 1px;
 }
 
 .food-search kbd {
@@ -661,6 +702,62 @@
 .home-section {
   width: min(1240px, calc(100% - 80px));
   margin: 0 auto;
+}
+
+.results-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: -32px;
+  margin-bottom: 45px;
+  border: 1px solid #eee4d6;
+  border-radius: 14px;
+  background: #fffefa;
+  padding: 13px 16px;
+}
+
+.results-counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  color: #746b61;
+  font-size: 12px;
+}
+
+.results-counts strong {
+  color: #24211d;
+}
+
+.results-counts > span {
+  margin: 0 5px;
+  color: #c8b6a2;
+}
+
+.sort-control {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #746b61;
+  font-size: 11px;
+}
+
+.sort-control select {
+  max-width: 230px;
+  min-height: 38px;
+  border: 1px solid #e8dfd2;
+  border-radius: 9px;
+  background: #fffefa;
+  color: #24211d;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 30px 0 10px;
+}
+
+.sort-control select:focus-visible {
+  outline: 2px solid var(--food-red);
+  outline-offset: 2px;
 }
 
 .category-section {
@@ -1481,6 +1578,23 @@
   .hero-search-wrap .food-search {
     height: 48px;
     padding: 0 9px;
+  }
+
+  .results-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: -18px;
+    margin-bottom: 30px;
+    padding: 12px;
+  }
+
+  .sort-control {
+    justify-content: space-between;
+  }
+
+  .sort-control select {
+    flex: 1;
   }
 
   .food-search input {
