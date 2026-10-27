@@ -3245,3 +3245,145 @@
     font-size: 10px;
   }
 }
+/* HUNGRY HOUR - Simple navbar layout */
+.site-header {
+  position: relative;
+  z-index: 100;
+  width: 100%;
+  background: #fffaf2;
+}
+
+.header-inner {
+  width: 100%;
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 32px;
+  box-sizing: border-box;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.nav-list {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-list li {
+  list-style: none;
+}
+
+.nav-link {
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.header-search {
+  flex: 1;
+  min-width: 160px;
+  max-width: 300px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.demo-greeting {
+  white-space: nowrap;
+}
+
+.menu-toggle {
+  display: none;
+}
+
+/* Mobile navbar */
+@media (max-width: 900px) {
+  .header-inner {
+    min-height: 72px;
+    padding: 12px 18px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid #e7dccc;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .main-nav {
+    display: none;
+    width: 100%;
+    order: 5;
+  }
+
+  .main-nav.main-nav-open {
+    display: flex;
+  }
+
+  .nav-list {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 0;
+  }
+
+  .header-search {
+    order: 6;
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .header-actions {
+    margin-left: auto;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .header-inner {
+    padding: 12px;
+  }
+
+  .brand-name {
+    font-size: 13px;
+  }
+
+  .header-actions {
+    gap: 8px;
+  }
+
+  .demo-greeting {
+    display: none;
+  }
+}
