@@ -39,16 +39,6 @@ export default function Login() {
   };
 
   const handleGuestLogin = () => {
-    const demoUser = {
-      id: "demo-001",
-      name: "Demo User",
-      email: "demo@hungryhour.local",
-    };
-    localStorage.setItem(
-      "hh_demo_session",
-      JSON.stringify({ isDemo: true, user: demoUser }),
-    );
-    sessionStorage.removeItem("hh_opening_intro_shown");
     navigate("/home", { replace: true });
   };
 

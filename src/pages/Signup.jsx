@@ -36,11 +36,18 @@ export default function Signup() {
       await signUp(fullName, email, password);
       navigate("/verify-otp", { state: { email }, replace: true });
     } catch (error) {
-      setFormMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to create your account. Please try again.",
-      );
+      if (error instanceof Error && error.message.includes("A registration is already pending for this email")) {
+        setFormMessage(
+          "A registration is already pending for this email. Would you like to proceed with verification?",
+        );
+        navigate("/verify-otp", { state: { email }, replace: true });
+      } else {
+        setFormMessage(
+          error instanceof Error
+            ? error.message
+            : "Unable to create your account. Please try again.",
+        );
+      }
     }
   };
 
