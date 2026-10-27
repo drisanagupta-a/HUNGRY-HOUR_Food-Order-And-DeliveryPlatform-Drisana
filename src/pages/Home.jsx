@@ -123,6 +123,9 @@ export default function Home({
   const [favorites, setFavorites] = useState([]);
   const [showFavorites, setShowFavorites] = useState(false);
 
+  const [restaurants, setRestaurants] = useState([]);
+  const [isRestaurantsLoading, setIsRestaurantsLoading] = useState(false);
+  const [restaurantsError, setRestaurantsError] = useState("");
   const search = normalizeSearchText(searchText);
   const matchingDishes = mockDishes.filter((dish) => {
     const restaurant = mockRestaurants.find(

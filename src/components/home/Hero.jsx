@@ -36,14 +36,8 @@ export default function Hero({ searchText, setSearchText }) {
       <div className="hero-overlay" />
       <div className="hero-inner">
         <div className={`hero-copy copy-stage-${stage}`}>
-          <p className="hero-eyebrow">
-            <span aria-hidden="true">✦</span> EAT LIKE YOU MEAN IT
-          </p>
           <h1 className={`hero-headline headline-stage-${stage}`}>
-            <span className="hero-headline-wrap">
-              <span className="hero-headline-line">Eat like you</span>
-              <span className="hero-headline-line">mean it.</span>
-            </span>
+            EAT LIKE YOU MEAN IT
           </h1>
           <p className={`hero-description desc-stage-${stage}`}>
             Big cravings, little effort. Find the local favorites you love,
