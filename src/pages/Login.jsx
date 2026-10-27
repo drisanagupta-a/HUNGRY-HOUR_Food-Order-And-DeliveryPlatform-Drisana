@@ -38,6 +38,19 @@ export default function Login() {
     }
   };
 
+  const handleGuestLogin = () => {
+    const demoUser = {
+      id: "demo-001",
+      name: "Demo User",
+      email: "demo@hungryhour.local",
+    };
+    localStorage.setItem(
+      "hh_demo_session",
+      JSON.stringify({ isDemo: true, user: demoUser }),
+    );
+    navigate("/home", { replace: true });
+  };
+
   return (
     <AuthLayout eyebrow="Welcome back" title="Log in">
       <form
@@ -109,6 +122,14 @@ export default function Login() {
           className="w-full rounded-xl bg-[#D1011F] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#B9001B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isSubmitting ? "Logging in..." : "Log In"}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleGuestLogin}
+          className="w-full rounded-xl border border-[#DDD3C7] px-4 py-3 text-sm font-bold text-[#24211d] transition hover:bg-[#fffaf2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2"
+        >
+          Continue as Guest
         </button>
       </form>
 

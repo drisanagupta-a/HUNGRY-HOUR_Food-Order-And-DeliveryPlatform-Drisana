@@ -20,6 +20,24 @@ export default function Navbar({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const navigate = useNavigate();
+
+  function getDemoUser() {
+    try {
+      const session = localStorage.getItem("hh_demo_session");
+      if (session) {
+        const parsed = JSON.parse(session);
+        if (parsed?.isDemo && parsed?.user) {
+          return parsed.user;
+        }
+      }
+    } catch {
+      // Invalid JSON in localStorage; no demo user
+    }
+    return null;
+  }
+
+  const demoUser = getDemoUser();
+
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const cartSubtotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
@@ -29,6 +47,14 @@ export default function Navbar({
   async function handleLogout() {
     setIsLoggingOut(true);
     setLogoutError("");
+
+    // Demo users: clear localStorage only, never contact the backend
+    if (demoUser) {
+      localStorage.removeItem("hh_demo_session");
+      navigate("/login", { replace: true });
+      setIsLoggingOut(false);
+      return;
+    }
 
     try {
       await logOut();
@@ -167,15 +193,36 @@ export default function Navbar({
             )}
           </div>
           {showLogout && (
-            <button
-              className="profile-link"
-              type="button"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-            >
-              <LogOut size={18} aria-hidden="true" />
-              <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
-            </button>
+            <>
+              {demoUser ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-[#5F584F]">
+                    Hello, {demoUser.name}
+                  </span>
+                  <button
+                    className="profile-link"
+                    type="button"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                  >
+                    <LogOut size={18} aria-hidden="true" />
+                    <span>
+                      {isLoggingOut ? "Logging out..." : "Log out"}
+                    </span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="profile-link"
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                >
+                  <LogOut size={18} aria-hidden="true" />
+                  <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
+                </button>
+              )}
+            </>
           )}
           {logoutError && (
             <p className="max-w-40 text-xs text-[#D1011F]" role="alert">

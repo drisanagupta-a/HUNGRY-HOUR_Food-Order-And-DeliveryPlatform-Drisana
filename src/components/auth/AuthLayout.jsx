@@ -76,7 +76,11 @@ export default function AuthLayout({ eyebrow, title, children }) {
             src={foodPlate}
             alt=""
             aria-hidden="true"
-            className="absolute bottom-[6%] left-[17%] z-20 w-[clamp(10rem,28vw,23rem)] sm:w-[320px] lg:w-[360px]"
+            className={`absolute bottom-[6%] z-20 w-[clamp(10rem,28vw,23rem)] sm:w-[320px] lg:w-[360px] ${
+              title === "Sign up"
+                ? "left-[20%] sm:left-[22%] lg:left-[24%]"
+                : "left-[17%]"
+            }`}
           />
 
           {/* Lemon illustration partially cropped near bottom-left corner */}

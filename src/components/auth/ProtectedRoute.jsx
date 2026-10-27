@@ -13,6 +13,22 @@ export default function ProtectedRoute({ children }) {
     setStatus("checking");
     setErrorMessage("");
 
+    // Allow demo sessions stored in localStorage without contacting the backend
+    try {
+      const demoSession = localStorage.getItem("hh_demo_session");
+      if (demoSession) {
+        const parsed = JSON.parse(demoSession);
+        if (parsed?.isDemo && parsed?.user) {
+          if (isCurrent) {
+            setStatus("authenticated");
+          }
+          return;
+        }
+      }
+    } catch {
+      // Invalid JSON in localStorage; fall through to normal auth check
+    }
+
     getMyProfile()
       .then(() => {
         if (isCurrent) {
