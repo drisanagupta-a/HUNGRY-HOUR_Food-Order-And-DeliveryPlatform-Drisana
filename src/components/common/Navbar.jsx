@@ -105,25 +105,13 @@ export default function Navbar({
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               onClick={() => setMenuOpen((open) => !open)}
             >
-              {menuOpen ? (
-                <X size={20} aria-hidden="true" />
-              ) : (
-                <Menu size={20} aria-hidden="true" />
-              )}
+              {menuOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
             </button>
 
             <nav
               className={`main-nav ${menuOpen ? "main-nav-open" : ""}`}
               aria-label="Main navigation"
             >
-              <button
-                className="menu-close"
-                type="button"
-                aria-label="Close menu"
-                onClick={() => setMenuOpen(false)}
-              >
-                <X size={20} aria-hidden="true" />
-              </button>
               <ul className="nav-list">
                 {NAV_LINKS.map((link) => (
                   <li key={link.label}>

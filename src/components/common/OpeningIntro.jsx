@@ -25,13 +25,13 @@ export default function OpeningIntro({ onComplete }) {
       sessionStorage.setItem("hh_opening_intro_shown", "1");
       setVisible(false);
       onComplete?.();
-    }, reducedMotion ? 900 : 2200);
+    }, reducedMotion ? 600 : 1500);
 
     return () => {
       window.clearTimeout(timer);
       window.clearTimeout(hideTimer);
     };
-  }, [onComplete]);
+  }, []);
 
   if (!visible) return null;
 
