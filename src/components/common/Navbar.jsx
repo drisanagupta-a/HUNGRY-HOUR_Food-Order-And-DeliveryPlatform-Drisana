@@ -1,8 +1,15 @@
 import { useState } from "react";
-import { Heart, LogOut, ShoppingBag, X } from "lucide-react";
+import { Heart, LogOut, Menu, ShoppingBag, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, logOut } from "../../services/authService.js";
 import SearchBar from "./SearchBar.jsx";
+
+const NAV_LINKS = [
+  { label: "Home", href: "#top" },
+  { label: "Restaurants", href: "#restaurants" },
+  { label: "Offers", href: "#offers" },
+  { label: "Help", href: "#help" },
+];
 
 export default function Navbar({
   searchText,
@@ -20,6 +27,7 @@ export default function Navbar({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   function getDemoUser() {
     try {
@@ -53,6 +61,7 @@ export default function Navbar({
       localStorage.removeItem("hh_demo_session");
       navigate("/login", { replace: true });
       setIsLoggingOut(false);
+      setMenuOpen(false);
       return;
     }
 
@@ -88,20 +97,62 @@ export default function Navbar({
         </Link>
 
         {showNavigation && (
-          <nav className="main-nav" aria-label="Main navigation">
-            <a className="nav-link nav-link-active" href="#top">
-              Home
-            </a>
-            <a className="nav-link" href="#restaurants">
-              Restaurants
-            </a>
-            <a className="nav-link" href="#offers">
-              Offers
-            </a>
-            <a className="nav-link" href="#help">
-              Help
-            </a>
-          </nav>
+          <>
+            <button
+              className="menu-toggle"
+              type="button"
+              aria-expanded={menuOpen}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              {menuOpen ? (
+                <X size={20} aria-hidden="true" />
+              ) : (
+                <Menu size={20} aria-hidden="true" />
+              )}
+            </button>
+
+            <nav
+              className={`main-nav ${menuOpen ? "main-nav-open" : ""}`}
+              aria-label="Main navigation"
+            >
+              <button
+                className="menu-close"
+                type="button"
+                aria-label="Close menu"
+                onClick={() => setMenuOpen(false)}
+              >
+                <X size={20} aria-hidden="true" />
+              </button>
+              <ul className="nav-list">
+                {NAV_LINKS.map((link) => (
+                  <li key={link.label}>
+                    <a
+                      className="nav-link"
+                      href={link.href}
+                      aria-current={link.href === "#top" ? "page" : undefined}
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+                {showLogout && demoUser ? (
+                  <li>
+                    <button
+                      className="nav-link nav-logout"
+                      type="button"
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                    >
+                      {isLoggingOut
+                        ? "Logging out..."
+                        : `Log out ${demoUser.name}`}
+                    </button>
+                  </li>
+                ) : null}
+              </ul>
+            </nav>
+          </>
         )}
 
         {showSearch && (
@@ -192,37 +243,21 @@ export default function Navbar({
               </div>
             )}
           </div>
-          {showLogout && (
-            <>
-              {demoUser ? (
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-[#5F584F]">
-                    Hello, {demoUser.name}
-                  </span>
-                  <button
-                    className="profile-link"
-                    type="button"
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                  >
-                    <LogOut size={18} aria-hidden="true" />
-                    <span>
-                      {isLoggingOut ? "Logging out..." : "Log out"}
-                    </span>
-                  </button>
-                </div>
-              ) : (
-                <button
-                  className="profile-link"
-                  type="button"
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                >
-                  <LogOut size={18} aria-hidden="true" />
-                  <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
-                </button>
-              )}
-            </>
+          {showLogout && !demoUser && (
+            <button
+              className="profile-link"
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
+              <LogOut size={18} aria-hidden="true" />
+              <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
+            </button>
+          )}
+          {demoUser && !menuOpen && showNavigation && (
+            <div className="demo-greeting">
+              <span className="demo-name">Hello, {demoUser.name}</span>
+            </div>
           )}
           {logoutError && (
             <p className="max-w-40 text-xs text-[#D1011F]" role="alert">

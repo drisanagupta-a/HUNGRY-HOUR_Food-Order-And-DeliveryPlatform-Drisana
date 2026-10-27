@@ -2,6 +2,7 @@ import { useState } from "react";
 import Navbar from "../components/common/Navbar.jsx";
 import Footer from "../components/common/Footer.jsx";
 import Hero from "../components/home/Hero.jsx";
+import OpeningIntro from "../components/common/OpeningIntro.jsx";
 import CategorySection from "../components/home/CategorySection.jsx";
 import RestaurantSection from "../components/home/RestaurantSection.jsx";
 import PopularDishes from "../components/home/PopularDishes.jsx";
@@ -248,6 +249,7 @@ export default function Home({
 
   return (
     <div className="food-home" id="top">
+      <OpeningIntro onComplete={() => {}} />
       <Navbar
         searchText={searchText}
         setSearchText={setSearchText}

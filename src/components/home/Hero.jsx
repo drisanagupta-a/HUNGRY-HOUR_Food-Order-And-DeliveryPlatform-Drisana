@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import foodHero from "../../assets/Mediterranean Sticker Food Collection 2.png";
 import oliveBowl from "../../assets/Mediterranean Feast Sticker Set 2.png";
 import lemon from "../../assets/Layer_1 (4).png";
 import SearchBar from "../common/SearchBar.jsx";
@@ -5,17 +7,29 @@ import SearchBar from "../common/SearchBar.jsx";
 const popularSearches = ["Pizza", "Burgers", "Biryani", "Dosa"];
 
 export default function Hero({ searchText, setSearchText }) {
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setRevealed(true), 100);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
-    <section className="hero-section">
+    <section className="hero-section" aria-label="Featured food">
       <div className="hero-inner">
         <div className="hero-copy">
           <p className="hero-eyebrow">
-            <span aria-hidden="true">✦</span> A LITTLE HAPPINESS, DELIVERED
+            <span aria-hidden="true">✦</span> EAT LIKE YOU MEAN IT
           </p>
-          <h1>
-            Good food.
-            <br />
-            <span>Good mood.</span>
+          <h1 className={`hero-headline ${revealed ? "hero-revealed" : ""}`}>
+            <span className="hero-headline-wrap">
+              <span className={`hero-headline-line ${revealed ? "hero-revealed" : ""}`}>
+                Eat like you
+              </span>
+              <span className={`hero-headline-line ${revealed ? "hero-revealed" : ""}`}>
+                mean it.
+              </span>
+            </span>
           </h1>
           <p className="hero-description">
             Big cravings, little effort. Find the local favorites you love,
@@ -43,32 +57,17 @@ export default function Hero({ searchText, setSearchText }) {
               </button>
             ))}
           </div>
-          <div className="hero-trust">
-            <span className="trust-avatars" aria-hidden="true">
-              <i>☺</i>
-              <i>☺</i>
-              <i>☺</i>
-            </span>
-            <span>
-              <b>Made for your kind of hungry</b>
-              <small>Local favorites, always close by</small>
-            </span>
-          </div>
         </div>
 
         <div className="hero-art">
           <div className="hero-photo-frame">
             <img
               className="hero-photo"
-              src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=90"
-              alt="A colorful table of fresh, delicious food"
+              src={foodHero}
+              alt="A colorful spread of fresh, delicious dishes"
               fetchPriority="high"
             />
             <div className="hero-photo-shade" />
-            <div className="hero-photo-caption">
-              <span className="caption-stars">★★★★★</span>
-              <span>Something lovely is cooking</span>
-            </div>
           </div>
           <img
             className="hero-sticker hero-olive"
@@ -82,21 +81,7 @@ export default function Hero({ searchText, setSearchText }) {
             alt=""
             aria-hidden="true"
           />
-          <div className="hero-float-card">
-            <span className="float-card-icon" aria-hidden="true">
-              ↗
-            </span>
-            <span>
-              <b>Made with care</b>
-              <small>From kitchens near you</small>
-            </span>
-          </div>
         </div>
-      </div>
-      <div className="hero-bottom-note">
-        <span>Good things take a little time</span>
-        <span className="note-line" />
-        <span>Great food is worth it</span>
       </div>
     </section>
   );
