@@ -1,37 +1,30 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ApiError, getMyProfile } from "../../services/authService.js";
+import { useAuth } from "../../context/AuthContext.jsx";
 
 export default function ProtectedRoute({ children }) {
+  const { user, setProfile, clearProfile } = useAuth();
   const [attempt, setAttempt] = useState(0);
-  const [status, setStatus] = useState("checking");
+  const [status, setStatus] = useState(() => (user ? "authenticated" : "checking"));
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     let isCurrent = true;
+
+    if (user && attempt === 0) {
+      setStatus("authenticated");
+      return;
+    }
+
     setStatus("checking");
     setErrorMessage("");
 
-    // Allow demo sessions stored in localStorage without contacting the backend
-    try {
-      const demoSession = localStorage.getItem("hh_demo_session");
-      if (demoSession) {
-        const parsed = JSON.parse(demoSession);
-        if (parsed?.isDemo && parsed?.user) {
-          if (isCurrent) {
-            setStatus("authenticated");
-          }
-          return;
-        }
-      }
-    } catch {
-      // Invalid JSON in localStorage; fall through to normal auth check
-    }
-
     getMyProfile()
-      .then(() => {
+      .then((profileData) => {
         if (isCurrent) {
+          setProfile(profileData);
           setStatus("authenticated");
         }
       })
@@ -41,6 +34,7 @@ export default function ProtectedRoute({ children }) {
         }
 
         if (error instanceof ApiError && error.status === 401) {
+          clearProfile();
           navigate(
             `/login?error=${encodeURIComponent("Your session expired. Please log in again.")}`,
             { replace: true },
@@ -59,7 +53,7 @@ export default function ProtectedRoute({ children }) {
     return () => {
       isCurrent = false;
     };
-  }, [attempt, navigate]);
+  }, [attempt, clearProfile, navigate, setProfile, user]);
 
   if (status === "authenticated") {
     return children;

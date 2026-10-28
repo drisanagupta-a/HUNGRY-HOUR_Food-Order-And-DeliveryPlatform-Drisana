@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { Heart, LogOut, Menu, ShoppingBag, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, Heart, LogOut, Menu, ShoppingBag, User, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, logOut } from "../../services/authService.js";
+import { useAuth } from "../../context/AuthContext.jsx";
 import SearchBar from "./SearchBar.jsx";
 
 const NAV_LINKS = [
@@ -23,28 +24,42 @@ export default function Navbar({
   showLogout = true,
   homePath = "/home",
 }) {
+  const { user, clearProfile } = useAuth();
   const [cartIsOpen, setCartIsOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
-  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const accountMenuRef = useRef(null);
 
-  function getDemoUser() {
-    try {
-      const session = localStorage.getItem("hh_demo_session");
-      if (session) {
-        const parsed = JSON.parse(session);
-        if (parsed?.isDemo && parsed?.user) {
-          return parsed.user;
-        }
+  // Close account dropdown on outside click or escape key
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target)
+      ) {
+        setAccountMenuOpen(false);
       }
-    } catch {
-      // Invalid JSON in localStorage; no demo user
     }
-    return null;
-  }
 
-  const demoUser = getDemoUser();
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setAccountMenuOpen(false);
+      }
+    }
+
+    if (accountMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [accountMenuOpen]);
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const cartSubtotal = cartItems.reduce(
@@ -56,31 +71,24 @@ export default function Navbar({
     setIsLoggingOut(true);
     setLogoutError("");
 
-    // Demo users: clear localStorage only, never contact the backend
-    if (demoUser) {
-      localStorage.removeItem("hh_demo_session");
+    try {
+      await logOut();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        // already unauthenticated
+      } else {
+        setLogoutError(
+          error instanceof Error
+            ? error.message
+            : "Unable to log out. Please try again.",
+        );
+      }
+    } finally {
+      clearProfile();
       navigate("/login", { replace: true });
       setIsLoggingOut(false);
       setMenuOpen(false);
-      return;
-    }
-
-    try {
-      await logOut();
-      navigate("/login", { replace: true });
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        navigate("/login", { replace: true });
-        return;
-      }
-
-      setLogoutError(
-        error instanceof Error
-          ? error.message
-          : "Unable to log out. Please try again.",
-      );
-    } finally {
-      setIsLoggingOut(false);
+      setAccountMenuOpen(false);
     }
   }
 
@@ -105,7 +113,11 @@ export default function Navbar({
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               onClick={() => setMenuOpen((open) => !open)}
             >
-              {menuOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
+              {menuOpen ? (
+                <X size={20} aria-hidden="true" />
+              ) : (
+                <Menu size={20} aria-hidden="true" />
+              )}
             </button>
 
             <nav
@@ -113,31 +125,65 @@ export default function Navbar({
               aria-label="Main navigation"
             >
               <ul className="nav-list">
+                {user && (
+                  <li className="mobile-user-item">
+                    <div className="mobile-user-info">
+                      <div className="account-avatar-small" aria-hidden="true">
+                        {user.fullName ? (
+                          user.fullName.charAt(0).toUpperCase()
+                        ) : (
+                          <User size={14} />
+                        )}
+                      </div>
+                      <div>
+                        <span className="mobile-user-label">Hello,</span>
+                        <strong className="mobile-user-name">
+                          {user.fullName}
+                        </strong>
+                      </div>
+                    </div>
+                  </li>
+                )}
+
                 {NAV_LINKS.map((link) => (
                   <li key={link.label}>
                     <a
                       className="nav-link"
                       href={link.href}
                       aria-current={link.href === "#top" ? "page" : undefined}
+                      onClick={() => setMenuOpen(false)}
                     >
                       {link.label}
                     </a>
                   </li>
                 ))}
-                {showLogout && demoUser ? (
-                  <li>
+
+                {user && (
+                  <li className="mobile-only-link">
+                    <Link
+                      to="/profile"
+                      className="nav-link mobile-profile-link"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <User size={16} aria-hidden="true" />
+                      <span>My Profile</span>
+                    </Link>
+                  </li>
+                )}
+
+                {showLogout && user && (
+                  <li className="mobile-only-link">
                     <button
                       className="nav-link nav-logout"
                       type="button"
                       onClick={handleLogout}
                       disabled={isLoggingOut}
                     >
-                      {isLoggingOut
-                        ? "Logging out..."
-                        : `Log out ${demoUser.name}`}
+                      <LogOut size={16} aria-hidden="true" />
+                      <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
                     </button>
                   </li>
-                ) : null}
+                )}
               </ul>
             </nav>
           </>
@@ -169,6 +215,7 @@ export default function Navbar({
               )}
             </button>
           )}
+
           <div className="cart-menu-wrap">
             <button
               className="icon-button cart-nav-button"
@@ -231,22 +278,81 @@ export default function Navbar({
               </div>
             )}
           </div>
-          {showLogout && !demoUser && (
-            <button
-              className="profile-link"
-              type="button"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-            >
-              <LogOut size={18} aria-hidden="true" />
-              <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
-            </button>
-          )}
-          {demoUser && !menuOpen && showNavigation && (
-            <div className="demo-greeting">
-              <span className="demo-name">Hello, {demoUser.name}</span>
+
+          {showLogout && user ? (
+            <div className="account-menu-wrap" ref={accountMenuRef}>
+              <button
+                className="account-nav-button"
+                type="button"
+                onClick={() => setAccountMenuOpen((open) => !open)}
+                aria-expanded={accountMenuOpen}
+                aria-haspopup="true"
+                aria-label="Account menu"
+              >
+                <div className="account-avatar" aria-hidden="true">
+                  {user.fullName ? (
+                    user.fullName.charAt(0).toUpperCase()
+                  ) : (
+                    <User size={15} />
+                  )}
+                </div>
+                <span className="account-name">{user.fullName}</span>
+                <ChevronDown
+                  size={14}
+                  className={`account-chevron ${accountMenuOpen ? "is-open" : ""}`}
+                  aria-hidden="true"
+                />
+              </button>
+
+              {accountMenuOpen && (
+                <div className="account-dropdown-menu" role="menu">
+                  <div className="account-dropdown-header">
+                    <p className="account-dropdown-name">{user.fullName}</p>
+                    {user.role && (
+                      <span className="account-dropdown-role">{user.role}</span>
+                    )}
+                  </div>
+                  <div className="account-dropdown-divider" />
+                  <Link
+                    to="/profile"
+                    className="account-dropdown-item"
+                    role="menuitem"
+                    onClick={() => setAccountMenuOpen(false)}
+                  >
+                    <User size={16} aria-hidden="true" />
+                    <span>My Profile</span>
+                  </Link>
+                  <div className="account-dropdown-divider" />
+                  <button
+                    type="button"
+                    className="account-dropdown-item account-logout-item"
+                    role="menuitem"
+                    onClick={() => {
+                      setAccountMenuOpen(false);
+                      handleLogout();
+                    }}
+                    disabled={isLoggingOut}
+                  >
+                    <LogOut size={16} aria-hidden="true" />
+                    <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
+                  </button>
+                </div>
+              )}
             </div>
+          ) : (
+            showLogout && (
+              <button
+                className="profile-link"
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                <LogOut size={18} aria-hidden="true" />
+                <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
+              </button>
+            )
           )}
+
           {logoutError && (
             <p className="max-w-40 text-xs text-[#D1011F]" role="alert">
               {logoutError}
