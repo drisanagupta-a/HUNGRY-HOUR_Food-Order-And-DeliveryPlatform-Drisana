@@ -1,26 +1,32 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Heart, LogOut, Menu, PackageCheck, ShoppingBag, User, X } from "lucide-react";
+import {
+  ChevronDown,
+  Heart,
+  LogOut,
+  MapPin,
+  Menu,
+  PackageCheck,
+  ShoppingBag,
+  User,
+  X,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, logOut } from "../../services/authService.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import SearchBar from "./SearchBar.jsx";
-
-const NAV_LINKS = [
-  { label: "Home", href: "#top" },
-  { label: "Restaurants", href: "#restaurants" },
-  { label: "Offers", href: "#offers" },
-  { label: "Help", href: "#help" },
-];
+import hungryHourLogo from "../../assets/Group 9.svg";
 
 export default function Navbar({
   searchText,
   setSearchText,
-  favoriteCount,
-  cartItems,
+  favoriteCount = 0,
+  cartItems = [],
   onFavoritesClick,
+  onToggleSidebar,
+  sidebarOpen = false,
+  deliveryLocation = "Bengaluru, 560001",
   showSearch = true,
   showFavorites = true,
-  showNavigation = true,
   showLogout = true,
   homePath = "/home",
 }) {
@@ -29,7 +35,6 @@ export default function Navbar({
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const accountMenuRef = useRef(null);
 
@@ -87,7 +92,6 @@ export default function Navbar({
       clearProfile();
       navigate("/login", { replace: true });
       setIsLoggingOut(false);
-      setMenuOpen(false);
       setAccountMenuOpen(false);
     }
   }
@@ -95,124 +99,63 @@ export default function Navbar({
   return (
     <header className="site-header">
       <div className="header-inner">
-        <Link className="brand" to={homePath} aria-label="Hungry Hour home">
-          <span className="brand-mark" aria-hidden="true">
-            hh
-          </span>
-          <span className="brand-name">
-            HUNGRY <b>HOUR</b>
-          </span>
-        </Link>
-
-        {showNavigation && (
-          <>
+        {/* Left Side: Hamburger + Brand Logo + Delivery Location */}
+        <div className="header-left-group">
+          {onToggleSidebar && (
             <button
-              className="menu-toggle"
+              className="sidebar-hamburger-btn"
               type="button"
-              aria-expanded={menuOpen}
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              onClick={() => setMenuOpen((open) => !open)}
+              aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+              onClick={onToggleSidebar}
             >
-              {menuOpen ? (
-                <X size={20} aria-hidden="true" />
-              ) : (
-                <Menu size={20} aria-hidden="true" />
-              )}
+              <Menu size={22} aria-hidden="true" />
             </button>
+          )}
 
-            <nav
-              className={`main-nav ${menuOpen ? "main-nav-open" : ""}`}
-              aria-label="Main navigation"
-            >
-              <ul className="nav-list">
-                {user && (
-                  <li className="mobile-user-item">
-                    <div className="mobile-user-info">
-                      <div className="account-avatar-small" aria-hidden="true">
-                        {user.fullName ? (
-                          user.fullName.charAt(0).toUpperCase()
-                        ) : (
-                          <User size={14} />
-                        )}
-                      </div>
-                      <div>
-                        <span className="mobile-user-label">Hello,</span>
-                        <strong className="mobile-user-name">
-                          {user.fullName}
-                        </strong>
-                      </div>
-                    </div>
-                  </li>
-                )}
+          <Link className="brand" to={homePath} aria-label="Hungry Hour home">
+            <img
+              src={hungryHourLogo}
+              alt="HUNGRY HOUR"
+              className="brand-logo-img"
+              onError={(e) => {
+                // Graceful fallback to text if SVG fails
+                e.currentTarget.style.display = "none";
+                const fallback = e.currentTarget.nextElementSibling;
+                if (fallback) fallback.style.display = "inline-flex";
+              }}
+            />
+            <span className="brand-fallback-text" style={{ display: "none" }}>
+              HUNGRY <b>HOUR</b>
+            </span>
+          </Link>
 
-                {NAV_LINKS.map((link) => (
-                  <li key={link.label}>
-                    <a
-                      className="nav-link"
-                      href={link.href}
-                      aria-current={link.href === "#top" ? "page" : undefined}
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
+          {/* Delivery Location with Location Icon */}
+          <div className="header-location-pill" title="Current delivery location">
+            <MapPin size={16} className="location-pin" aria-hidden="true" />
+            <div className="location-info">
+              <span className="location-label">Deliver to</span>
+              <span className="location-address">
+                {deliveryLocation}
+              </span>
+            </div>
+          </div>
+        </div>
 
-                {user && (
-                  <>
-                    <li className="mobile-only-link">
-                      <Link
-                        to="/profile"
-                        className="nav-link mobile-profile-link"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        <User size={16} aria-hidden="true" />
-                        <span>My Profile</span>
-                      </Link>
-                    </li>
-                    <li className="mobile-only-link">
-                      <Link
-                        to="/orders"
-                        className="nav-link mobile-profile-link"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        <PackageCheck size={16} aria-hidden="true" />
-                        <span>My Orders</span>
-                      </Link>
-                    </li>
-                  </>
-                )}
-
-                {showLogout && user && (
-                  <li className="mobile-only-link">
-                    <button
-                      className="nav-link nav-logout"
-                      type="button"
-                      onClick={handleLogout}
-                      disabled={isLoggingOut}
-                    >
-                      <LogOut size={16} aria-hidden="true" />
-                      <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
-                    </button>
-                  </li>
-                )}
-              </ul>
-            </nav>
-          </>
-        )}
-
+        {/* Center: Restaurant and food search bar */}
         {showSearch && (
           <div className="header-search">
             <SearchBar
               value={searchText}
               onChange={setSearchText}
-              placeholder="Find something delicious"
+              placeholder="Search restaurants, cuisines, dishes..."
               compact
             />
           </div>
         )}
 
+        {/* Right Side: Favourites + Cart + User Profile Avatar */}
         <div className="header-actions">
+          {/* Favourites Control */}
           {showFavorites && (
             <button
               className="icon-button favorite-nav-button"
@@ -228,6 +171,7 @@ export default function Navbar({
             </button>
           )}
 
+          {/* Cart Bag Control */}
           <div className="cart-menu-wrap">
             <button
               className="icon-button cart-nav-button"
@@ -242,6 +186,7 @@ export default function Navbar({
                 <span className="action-count">{cartCount}</span>
               )}
             </button>
+
             {cartIsOpen && (
               <div className="cart-popover">
                 <div className="cart-popover-heading">
@@ -281,12 +226,29 @@ export default function Navbar({
                       <span>Subtotal</span>
                       <strong>₹{cartSubtotal}</strong>
                     </p>
-                    <div className="cart-checkout-action" style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #eee4d6" }}>
+                    <div
+                      className="cart-checkout-action"
+                      style={{
+                        marginTop: "12px",
+                        paddingTop: "12px",
+                        borderTop: "1px solid #eee4d6",
+                      }}
+                    >
                       <Link
                         to="/checkout"
                         onClick={() => setCartIsOpen(false)}
-                        className="block w-full text-center rounded-full bg-[#c92332] py-2.5 text-xs font-bold text-white shadow transition hover:bg-[#a81725]"
-                        style={{ display: "block", width: "100%", textAlign: "center", borderRadius: "9999px", background: "#c92332", padding: "10px 14px", color: "#fff", fontWeight: "700", textDecoration: "none" }}
+                        className="block w-full text-center rounded-full bg-[#D90429] py-2.5 text-xs font-bold text-white shadow transition hover:bg-[#b00320]"
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          textAlign: "center",
+                          borderRadius: "9px",
+                          background: "#D90429",
+                          padding: "10px 14px",
+                          color: "#fff",
+                          fontWeight: "700",
+                          textDecoration: "none",
+                        }}
                       >
                         Checkout • ₹{cartSubtotal}
                       </Link>
@@ -302,6 +264,7 @@ export default function Navbar({
             )}
           </div>
 
+          {/* User Profile / Avatar Dropdown */}
           {showLogout && user ? (
             <div className="account-menu-wrap" ref={accountMenuRef}>
               <button
@@ -386,7 +349,7 @@ export default function Navbar({
           )}
 
           {logoutError && (
-            <p className="max-w-40 text-xs text-[#D1011F]" role="alert">
+            <p className="max-w-40 text-xs text-[#D90429]" role="alert">
               {logoutError}
             </p>
           )}

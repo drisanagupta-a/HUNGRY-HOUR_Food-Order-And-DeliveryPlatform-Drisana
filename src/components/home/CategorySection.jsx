@@ -1,41 +1,32 @@
 export default function CategorySection({
-  categories,
-  selectedCategory,
+  categories = [],
+  selectedCategory = "All",
   onSelectCategory,
 }) {
   return (
-    <section className="home-section category-section" aria-labelledby="category-title">
-      <div className="section-heading category-heading">
-        <div>
-          <p className="section-kicker">WHAT SOUNDS GOOD?</p>
-          <h2 id="category-title">A craving for every mood.</h2>
-        </div>
-        <p className="section-aside">Pick a little something to get started</p>
-      </div>
-      <div className="category-list" role="group" aria-label="Filter by food type">
-        <button
-          className={`category-card${selectedCategory === "All" ? " category-card-active" : ""}`}
-          type="button"
-          onClick={() => onSelectCategory("All")}
-          aria-pressed={selectedCategory === "All"}
-        >
-          <span className="category-icon">✦</span>
-          <span>Everything</span>
-        </button>
-        {categories.map((category) => (
-          <button
-            className={`category-card${selectedCategory === category.name ? " category-card-active" : ""}`}
-            key={category.name}
-            type="button"
-            onClick={() => onSelectCategory(category.name)}
-            aria-pressed={selectedCategory === category.name}
-          >
-            <span className="category-icon" aria-hidden="true">
-              {category.icon}
-            </span>
-            <span>{category.name}</span>
-          </button>
-        ))}
+    <section className="food-categories-section" aria-label="Food Categories">
+      <div
+        className="categories-circular-row"
+        role="group"
+        aria-label="Filter food categories"
+      >
+        {categories.map((category) => {
+          const isSelected = selectedCategory === category.name;
+          return (
+            <button
+              key={category.name}
+              type="button"
+              onClick={() => onSelectCategory?.(category.name)}
+              className={`category-circular-card ${isSelected ? "is-active" : ""}`}
+              aria-pressed={isSelected}
+            >
+              <div className="category-circular-icon-wrap" aria-hidden="true">
+                <span className="category-emoji-icon">{category.icon}</span>
+              </div>
+              <span className="category-circular-label">{category.name}</span>
+            </button>
+          );
+        })}
       </div>
     </section>
   );

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/common/Navbar.jsx";
+import Sidebar from "../components/common/Sidebar.jsx";
 import Footer from "../components/common/Footer.jsx";
 import Hero from "../components/home/Hero.jsx";
 import OpeningIntro from "../components/common/OpeningIntro.jsx";
@@ -116,7 +117,7 @@ function sortByValue(items, getValue, direction = 1) {
 }
 
 export default function Home({
-  cartItems,
+  cartItems = [],
   onAddToCart,
   isDevelopmentPreview = false,
 }) {
@@ -126,6 +127,8 @@ export default function Home({
   const [sortBy, setSortBy] = useState("recommended");
   const [favorites, setFavorites] = useState([]);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeSection, setActiveSection] = useState("home");
 
   // Real backend restaurants state
   const [backendRestaurants, setBackendRestaurants] = useState([]);
@@ -177,16 +180,36 @@ export default function Home({
     const restaurant = activeRestaurants.find(
       (item) => item.id === dish.restaurantId,
     );
-    const matchesCategory =
-      selectedCategory === "All" ||
-      includesSearchTerm(
-        [
-          dish.category,
-          ...(restaurant?.categories ?? []),
-          restaurant?.cuisine,
-        ],
-        normalizeSearchText(selectedCategory),
-      );
+    let matchesCategory = selectedCategory === "All";
+    if (!matchesCategory) {
+      if (selectedCategory === "Noodles") {
+        matchesCategory =
+          includesSearchTerm(
+            [dish.category, dish.name, ...(restaurant?.categories ?? []), restaurant?.cuisine],
+            "noodle",
+          ) ||
+          includesSearchTerm(
+            [dish.category, ...(restaurant?.categories ?? [])],
+            "chinese",
+          );
+      } else if (selectedCategory === "Drinks") {
+        matchesCategory =
+          includesSearchTerm(
+            [dish.category, dish.name, ...(restaurant?.categories ?? []), restaurant?.cuisine],
+            "beverage",
+          ) ||
+          includesSearchTerm(
+            [dish.category, ...(restaurant?.categories ?? [])],
+            "drink",
+          );
+      } else {
+        matchesCategory = includesSearchTerm(
+          [dish.category, ...(restaurant?.categories ?? []), restaurant?.cuisine],
+          normalizeSearchText(selectedCategory),
+        );
+      }
+    }
+
     const matchesSearch =
       !search ||
       includesSearchTerm(
@@ -209,18 +232,47 @@ export default function Home({
     const restaurantDishes = mockDishes.filter(
       (dish) => dish.restaurantId === restaurant.id,
     );
-    const matchesCategory =
-      selectedCategory === "All" ||
-      (restaurant.categories &&
-        restaurant.categories.includes(selectedCategory)) ||
-      (restaurant.cuisine &&
-        normalizeSearchText(restaurant.cuisine).includes(
-          normalizeSearchText(selectedCategory),
-        )) ||
-      (restaurant.name &&
-        normalizeSearchText(restaurant.name).includes(
-          normalizeSearchText(selectedCategory),
-        ));
+    let matchesCategory = selectedCategory === "All";
+    if (!matchesCategory) {
+      if (selectedCategory === "Noodles") {
+        matchesCategory =
+          (restaurant.categories &&
+            (restaurant.categories.includes("Noodles") ||
+              restaurant.categories.includes("Chinese"))) ||
+          (restaurant.cuisine &&
+            (normalizeSearchText(restaurant.cuisine).includes("noodle") ||
+              normalizeSearchText(restaurant.cuisine).includes("chinese") ||
+              normalizeSearchText(restaurant.cuisine).includes("asian"))) ||
+          restaurantDishes.some(
+            (d) =>
+              d.category === "Noodles" ||
+              normalizeSearchText(d.name).includes("noodle"),
+          );
+      } else if (selectedCategory === "Drinks") {
+        matchesCategory =
+          (restaurant.categories &&
+            (restaurant.categories.includes("Drinks") ||
+              restaurant.categories.includes("Beverages"))) ||
+          (restaurant.cuisine &&
+            (normalizeSearchText(restaurant.cuisine).includes("drink") ||
+              normalizeSearchText(restaurant.cuisine).includes("beverage"))) ||
+          restaurantDishes.some(
+            (d) => d.category === "Drinks" || d.category === "Beverages",
+          );
+      } else {
+        matchesCategory =
+          (restaurant.categories &&
+            restaurant.categories.includes(selectedCategory)) ||
+          (restaurant.cuisine &&
+            normalizeSearchText(restaurant.cuisine).includes(
+              normalizeSearchText(selectedCategory),
+            )) ||
+          (restaurant.name &&
+            normalizeSearchText(restaurant.name).includes(
+              normalizeSearchText(selectedCategory),
+            ));
+      }
+    }
 
     const searchFields = [
       restaurant.name,
@@ -313,6 +365,8 @@ export default function Home({
   return (
     <div className="food-home" id="top">
       <OpeningIntro onComplete={() => {}} />
+
+      {/* 1. Top Navbar */}
       <Navbar
         searchText={searchText}
         setSearchText={setSearchText}
@@ -320,6 +374,8 @@ export default function Home({
         cartItems={cartItems}
         homePath={previewEnabled ? "/dev-dashboard-preview" : "/home"}
         showLogout={!previewEnabled}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen((open) => !open)}
         onFavoritesClick={() => {
           setShowFavorites((showingFavorites) => !showingFavorites);
           document.getElementById("restaurants")?.scrollIntoView({
@@ -328,127 +384,147 @@ export default function Home({
         }}
       />
 
-      <main>
-        <Hero searchText={searchText} setSearchText={setSearchText} />
-
-        <CategorySection
-          categories={foodCategories}
-          selectedCategory={selectedCategory}
-          onSelectCategory={selectCategory}
+      {/* Dashboard Layout: Left Sidebar + Main Content Area */}
+      <div className="dashboard-layout-wrapper">
+        {/* 2. Left Sidebar */}
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          cartCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)}
+          activeSection={activeSection}
+          onSelectSection={setActiveSection}
         />
 
-        <section className="home-section offers-section" id="offers">
-          <div className="section-heading">
-            <div>
-              <p className="section-kicker">GOOD THINGS ARE COOKING</p>
-              <h2>Little offers, big joy.</h2>
+        {/* Main Content Area */}
+        <main className="dashboard-main-content">
+          {/* 3. Main Hero Section */}
+          <Hero />
+
+          {/* 4. Food Categories (immediately below hero) */}
+          <CategorySection
+            categories={foodCategories}
+            selectedCategory={selectedCategory}
+            onSelectCategory={selectCategory}
+          />
+
+          {/* 5. Top Restaurants Section (immediately below categories) */}
+          <RestaurantSection
+            restaurants={sortedRestaurants}
+            favorites={favorites}
+            showFavorites={showFavorites}
+            detailsBasePath={
+              previewEnabled
+                ? "/dev-dashboard-preview/restaurants"
+                : "/restaurants"
+            }
+            onToggleFavorite={toggleFavorite}
+            onClearFilters={clearFilters}
+            isLoading={isLoadingRestaurants}
+            isFallback={!hasBackendRestaurants}
+            apiError={restaurantApiError}
+          />
+
+          {/* Filter Toolbar / Counts */}
+          <section
+            className="home-section results-toolbar"
+            aria-label="Search results and sorting"
+          >
+            <div className="results-counts" aria-live="polite">
+              <strong>{sortedRestaurants.length}</strong>{" "}
+              {sortedRestaurants.length === 1 ? "restaurant" : "restaurants"}
+              <span aria-hidden="true">·</span>
+              <strong>{sortedDishes.length}</strong>{" "}
+              {sortedDishes.length === 1 ? "dish" : "dishes"}
             </div>
-            <a className="text-link" href="#restaurants">
-              Browse restaurants <span aria-hidden="true">↗</span>
-            </a>
-          </div>
-          <div className="offer-grid">
-            {promotions.map((offer) => (
-              <article
-                className={`offer-card offer-card-${offer.tone}`}
-                key={offer.code}
+            <label className="sort-control">
+              <span>Sort by</span>
+              <select
+                value={sortBy}
+                onChange={(event) => setSortBy(event.target.value)}
               >
-                <img src={offer.image} alt="" loading="lazy" />
-                <div className="offer-copy">
-                  <p className="offer-eyebrow">{offer.eyebrow}</p>
-                  <h3>
-                    {offer.title.split("\n").map((line) => (
-                      <span key={line}>{line}</span>
-                    ))}
-                  </h3>
-                  <p className="offer-detail">{offer.detail}</p>
-                  <a className="offer-button" href="#restaurants">
-                    Find your feast <span aria-hidden="true">→</span>
-                  </a>
-                </div>
-                <span className="offer-code">USE {offer.code}</span>
-              </article>
-            ))}
-          </div>
-        </section>
+                {sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </section>
 
-        <section
-          className="home-section results-toolbar"
-          aria-label="Search results"
-        >
-          <div className="results-counts" aria-live="polite">
-            <strong>{sortedRestaurants.length}</strong>{" "}
-            {sortedRestaurants.length === 1 ? "restaurant" : "restaurants"}
-            <span aria-hidden="true">·</span>
-            <strong>{sortedDishes.length}</strong>{" "}
-            {sortedDishes.length === 1 ? "dish" : "dishes"}
-          </div>
-          <label className="sort-control">
-            <span>Sort by</span>
-            <select
-              value={sortBy}
-              onChange={(event) => setSortBy(event.target.value)}
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </section>
-
-        <RestaurantSection
-          restaurants={sortedRestaurants}
-          favorites={favorites}
-          showFavorites={showFavorites}
-          detailsBasePath={
-            previewEnabled
-              ? "/dev-dashboard-preview/restaurants"
-              : "/restaurants"
-          }
-          onToggleFavorite={toggleFavorite}
-          onClearFilters={clearFilters}
-          isLoading={isLoadingRestaurants}
-          isFallback={!hasBackendRestaurants}
-          apiError={restaurantApiError}
-        />
-
-        <PopularDishes
-          dishes={sortedDishes}
-          onAddToCart={onAddToCart}
-          onClearFilters={clearFilters}
-        />
-
-        <section className="how-section" id="help">
-          <div className="home-section how-inner">
-            <div className="section-heading how-heading">
+          {/* Offers Section */}
+          <section className="home-section offers-section" id="offers">
+            <div className="section-heading">
               <div>
-                <p className="section-kicker">GOOD FOOD, NO GUESSWORK</p>
-                <h2>From craving to happy.</h2>
+                <p className="section-kicker">GOOD THINGS ARE COOKING</p>
+                <h2>Little offers, big joy.</h2>
               </div>
-              <p className="how-intro">
-                Your next great meal is closer than you think. Here&apos;s how
-                Hungry Hour makes it happen.
-              </p>
+              <a className="text-link" href="#restaurants">
+                Browse restaurants <span aria-hidden="true">↗</span>
+              </a>
             </div>
-            <div className="steps-grid">
-              {deliverySteps.map((step) => (
-                <article className="step-card" key={step.number}>
-                  <div className="step-topline">
-                    <span className="step-icon" aria-hidden="true">
-                      {step.icon}
-                    </span>
-                    <span className="step-number">{step.number}</span>
+            <div className="offer-grid">
+              {promotions.map((offer) => (
+                <article
+                  className={`offer-card offer-card-${offer.tone}`}
+                  key={offer.code}
+                >
+                  <img src={offer.image} alt="" loading="lazy" />
+                  <div className="offer-copy">
+                    <p className="offer-eyebrow">{offer.eyebrow}</p>
+                    <h3>
+                      {offer.title.split("\n").map((line) => (
+                        <span key={line}>{line}</span>
+                      ))}
+                    </h3>
+                    <p className="offer-detail">{offer.detail}</p>
+                    <a className="offer-button" href="#restaurants">
+                      Find your feast <span aria-hidden="true">→</span>
+                    </a>
                   </div>
-                  <h3>{step.title}</h3>
-                  <p>{step.description}</p>
+                  <span className="offer-code">USE {offer.code}</span>
                 </article>
               ))}
             </div>
-          </div>
-        </section>
-      </main>
+          </section>
+
+          {/* Popular Dishes */}
+          <PopularDishes
+            dishes={sortedDishes}
+            onAddToCart={onAddToCart}
+            onClearFilters={clearFilters}
+          />
+
+          {/* How Hungry Hour Works */}
+          <section className="how-section" id="help">
+            <div className="home-section how-inner">
+              <div className="section-heading how-heading">
+                <div>
+                  <p className="section-kicker">GOOD FOOD, NO GUESSWORK</p>
+                  <h2>From craving to happy.</h2>
+                </div>
+                <p className="how-intro">
+                  Your next great meal is closer than you think. Here&apos;s how
+                  Hungry Hour makes it happen.
+                </p>
+              </div>
+              <div className="steps-grid">
+                {deliverySteps.map((step) => (
+                  <article className="step-card" key={step.number}>
+                    <div className="step-topline">
+                      <span className="step-icon" aria-hidden="true">
+                        {step.icon}
+                      </span>
+                      <span className="step-number">{step.number}</span>
+                    </div>
+                    <h3>{step.title}</h3>
+                    <p>{step.description}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
 
       <Footer />
     </div>

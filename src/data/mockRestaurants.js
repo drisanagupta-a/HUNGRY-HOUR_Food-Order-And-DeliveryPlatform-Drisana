@@ -1,14 +1,14 @@
+import orangeDrink from "../assets/Mediterranean Feast Sticker Set 5.png";
+
 export const foodCategories = [
+  { name: "All", icon: "✦" },
   { name: "Burgers", icon: "🍔" },
   { name: "Pizza", icon: "🍕" },
-  { name: "Indian", icon: "🍛" },
-  { name: "Chinese", icon: "🥡" },
-  { name: "South Indian", icon: "🥞" },
-  { name: "Momos", icon: "🥟" },
+  { name: "Noodles", icon: "🍜" },
   { name: "Snacks", icon: "🍟" },
-  { name: "Beverages", icon: "🥤" },
+  { name: "Drinks", icon: "🥤" },
+  { name: "Indian", icon: "🍛" },
   { name: "Desserts", icon: "🍰" },
-  { name: "Healthy food", icon: "🥗" },
 ];
 
 export const mockRestaurants = [
@@ -52,7 +52,7 @@ export const mockRestaurants = [
     id: "wok-this-way",
     name: "Wok This Way",
     cuisine: "Chinese · Asian",
-    categories: ["Chinese", "Momos"],
+    categories: ["Chinese", "Noodles", "Momos"],
     rating: "4.6",
     time: "20–30 min",
     fee: 20,
@@ -76,7 +76,7 @@ export const mockRestaurants = [
     id: "sweet-spot",
     name: "The Sweet Spot",
     cuisine: "Desserts · Beverages",
-    categories: ["Desserts", "Beverages"],
+    categories: ["Desserts", "Drinks", "Beverages"],
     rating: "4.8",
     time: "15–25 min",
     fee: 15,
@@ -128,7 +128,7 @@ export const mockDishes = [
     name: "Chilli Garlic Noodles",
     restaurant: "Wok This Way",
     restaurantId: "wok-this-way",
-    category: "Chinese",
+    category: "Noodles",
     description: "A savory noodle favorite with a bold garlic finish.",
     price: 219,
     rating: "4.6",
@@ -188,7 +188,7 @@ export const mockDishes = [
     name: "Fresh Orange Cooler",
     restaurant: "The Sweet Spot",
     restaurantId: "sweet-spot",
-    category: "Beverages",
+    category: "Drinks",
     description: "A bright, refreshing citrus drink.",
     price: 119,
     rating: "4.8",
@@ -207,4 +207,3 @@ export const mockDishes = [
       "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=85",
   },
 ];
-import orangeDrink from "../assets/Mediterranean Feast Sticker Set 5.png";
