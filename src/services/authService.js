@@ -8,7 +8,7 @@ export class ApiError extends Error {
   }
 }
 
-async function requestJson(
+export async function requestJson(
   path,
   method = "GET",
   data,

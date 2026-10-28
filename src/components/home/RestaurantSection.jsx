@@ -7,19 +7,48 @@ export default function RestaurantSection({
   onToggleFavorite,
   onClearFilters,
   detailsBasePath = "/restaurants",
+  isLoading = false,
+  isFallback = false,
+  apiError = "",
 }) {
   return (
     <section className="home-section restaurant-section" id="restaurants">
       <div className="section-heading">
         <div>
-          <p className="section-kicker">THE NEIGHBORHOOD TABLE</p>
+          <div className="flex items-center gap-2">
+            <p className="section-kicker">THE NEIGHBORHOOD TABLE</p>
+            {isFallback ? (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f3eae0] text-[#746C61] border border-[#e4d6c5]">
+                Sample Catalog Fallback
+              </span>
+            ) : restaurants.length > 0 && !isLoading ? (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Live Backend
+              </span>
+            ) : null}
+          </div>
           <h2>{showFavorites ? "Your lovely favorites." : "Places we love."}</h2>
+          {apiError && isFallback && (
+            <p className="text-xs text-[#746C61] mt-1">
+              Backend notice: {apiError}. Showing sample restaurants.
+            </p>
+          )}
         </div>
         <a className="text-link" href="#popular-dishes">
           See what&apos;s cooking <span aria-hidden="true">↓</span>
         </a>
       </div>
-      {restaurants.length > 0 ? (
+
+      {isLoading ? (
+        <div className="empty-results" role="status">
+          <span
+            className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-[#c92332]/20 border-t-[#c92332] mb-3"
+            aria-hidden="true"
+          />
+          <h3>Finding nearby kitchens...</h3>
+          <p>Fetching approved restaurants from the backend.</p>
+        </div>
+      ) : restaurants.length > 0 ? (
         <div className="restaurant-grid">
           {restaurants.map((restaurant) => {
             const isFavorite = favorites.includes(restaurant.id);
@@ -40,7 +69,11 @@ export default function RestaurantSection({
           <span aria-hidden="true">🍽️</span>
           <h3>No restaurants found just yet.</h3>
           <p>Try a different search or clear your filters.</p>
-          <button className="outline-button" type="button" onClick={onClearFilters}>
+          <button
+            className="outline-button"
+            type="button"
+            onClick={onClearFilters}
+          >
             Show all restaurants
           </button>
         </div>

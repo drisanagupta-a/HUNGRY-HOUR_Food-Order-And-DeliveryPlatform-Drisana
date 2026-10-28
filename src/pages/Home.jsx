@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/common/Navbar.jsx";
 import Footer from "../components/common/Footer.jsx";
 import Hero from "../components/home/Hero.jsx";
@@ -7,6 +7,7 @@ import CategorySection from "../components/home/CategorySection.jsx";
 import RestaurantSection from "../components/home/RestaurantSection.jsx";
 import PopularDishes from "../components/home/PopularDishes.jsx";
 import { foodCategories, mockDishes, mockRestaurants } from "../data/mockRestaurants.js";
+import { adaptRestaurant, fetchRestaurants } from "../services/restaurantService.js";
 import "../App.css";
 
 const promotions = [
@@ -73,6 +74,9 @@ function normalizeSearchText(value) {
 }
 
 function includesSearchTerm(values, search) {
+  if (!Array.isArray(values)) {
+    return typeof values === "string" && normalizeSearchText(values).includes(search);
+  }
   return values.some(
     (value) =>
       typeof value === "string" &&
@@ -123,12 +127,53 @@ export default function Home({
   const [favorites, setFavorites] = useState([]);
   const [showFavorites, setShowFavorites] = useState(false);
 
-  const [restaurants, setRestaurants] = useState([]);
-  const [isRestaurantsLoading, setIsRestaurantsLoading] = useState(false);
-  const [restaurantsError, setRestaurantsError] = useState("");
+  // Real backend restaurants state
+  const [backendRestaurants, setBackendRestaurants] = useState([]);
+  const [isLoadingRestaurants, setIsLoadingRestaurants] = useState(true);
+  const [restaurantApiError, setRestaurantApiError] = useState("");
+
   const search = normalizeSearchText(searchText);
+
+  useEffect(() => {
+    let isCurrent = true;
+    setIsLoadingRestaurants(true);
+    setRestaurantApiError("");
+
+    fetchRestaurants({ q: searchText.trim() || undefined })
+      .then((data) => {
+        if (!isCurrent) return;
+        if (Array.isArray(data) && data.length > 0) {
+          setBackendRestaurants(data.map(adaptRestaurant));
+        } else {
+          setBackendRestaurants([]);
+        }
+      })
+      .catch((error) => {
+        if (!isCurrent) return;
+        setRestaurantApiError(
+          error instanceof Error
+            ? error.message
+            : "Could not retrieve live restaurants from backend.",
+        );
+      })
+      .finally(() => {
+        if (isCurrent) {
+          setIsLoadingRestaurants(false);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [searchText]);
+
+  const hasBackendRestaurants = backendRestaurants.length > 0;
+  const activeRestaurants = hasBackendRestaurants
+    ? backendRestaurants
+    : mockRestaurants;
+
   const matchingDishes = mockDishes.filter((dish) => {
-    const restaurant = mockRestaurants.find(
+    const restaurant = activeRestaurants.find(
       (item) => item.id === dish.restaurantId,
     );
     const matchesCategory =
@@ -158,31 +203,37 @@ export default function Home({
 
     return matchesCategory && matchesSearch;
   });
-  const matchingRestaurants = mockRestaurants.filter((restaurant) => {
+
+  const matchingRestaurants = activeRestaurants.filter((restaurant) => {
     const restaurantDishes = mockDishes.filter(
       (dish) => dish.restaurantId === restaurant.id,
     );
     const matchesCategory =
       selectedCategory === "All" ||
-      restaurant.categories.includes(selectedCategory) ||
-      normalizeSearchText(restaurant.cuisine).includes(
-        normalizeSearchText(selectedCategory),
-      );
-    const matchesSearch =
-      !search ||
-      includesSearchTerm(
-        [
-          restaurant.name,
-          restaurant.cuisine,
-          ...restaurant.categories,
-          ...restaurantDishes.flatMap((dish) => [
-            dish.name,
-            dish.category,
-            dish.description,
-          ]),
-        ],
-        search,
-      );
+      (restaurant.categories &&
+        restaurant.categories.includes(selectedCategory)) ||
+      (restaurant.cuisine &&
+        normalizeSearchText(restaurant.cuisine).includes(
+          normalizeSearchText(selectedCategory),
+        )) ||
+      (restaurant.name &&
+        normalizeSearchText(restaurant.name).includes(
+          normalizeSearchText(selectedCategory),
+        ));
+
+    const searchFields = [
+      restaurant.name,
+      restaurant.cuisine,
+      restaurant.address,
+      ...(restaurant.categories || []),
+      ...restaurantDishes.flatMap((dish) => [
+        dish.name,
+        dish.category,
+        dish.description,
+      ]),
+    ].filter(Boolean);
+
+    const matchesSearch = !search || includesSearchTerm(searchFields, search);
     const matchesFavorites =
       !showFavorites || favorites.includes(restaurant.id);
 
@@ -194,12 +245,13 @@ export default function Home({
     "price-desc": (dish) => dish.price,
     "rating-desc": (dish) => Number.parseFloat(dish.rating),
     "delivery-asc": (dish) => {
-      const restaurant = mockRestaurants.find(
+      const restaurant = activeRestaurants.find(
         (item) => item.id === dish.restaurantId,
       );
       return parseDeliveryMinutes(restaurant?.time);
     },
   };
+
   const restaurantSorters = {
     "price-asc": (restaurant) => {
       const prices = mockDishes
@@ -215,9 +267,16 @@ export default function Home({
         .filter((price) => Number.isFinite(price));
       return prices.length ? Math.min(...prices) : undefined;
     },
-    "rating-desc": (restaurant) => Number.parseFloat(restaurant.rating),
-    "delivery-asc": (restaurant) => parseDeliveryMinutes(restaurant.time),
+    "rating-desc": (restaurant) =>
+      restaurant.rating !== undefined
+        ? Number.parseFloat(restaurant.rating)
+        : 0,
+    "delivery-asc": (restaurant) =>
+      restaurant.time !== undefined
+        ? parseDeliveryMinutes(restaurant.time)
+        : 9999,
   };
+
   const sortDirection = sortBy === "price-desc" ? -1 : 1;
   const sortedDishes = dishSorters[sortBy]
     ? sortByValue(matchingDishes, dishSorters[sortBy], sortDirection)
@@ -349,6 +408,9 @@ export default function Home({
           }
           onToggleFavorite={toggleFavorite}
           onClearFilters={clearFilters}
+          isLoading={isLoadingRestaurants}
+          isFallback={!hasBackendRestaurants}
+          apiError={restaurantApiError}
         />
 
         <PopularDishes
