@@ -5,6 +5,9 @@ import Login from "./pages/Login.jsx";
 import Profile from "./pages/Profile.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import RestaurantDetails from "./pages/RestaurantDetails.jsx";
+import Checkout from "./pages/Checkout.jsx";
+import OrderHistory from "./pages/OrderHistory.jsx";
+import OrderTracking from "./pages/OrderTracking.jsx";
 import Signup from "./pages/Signup.jsx";
 import VerifyOtp from "./pages/VerifyOtp.jsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
@@ -27,6 +30,10 @@ export default function App() {
 
   function finishLoginReloadIntro() {
     setShowIntroForLoginReload(false);
+  }
+
+  function clearCart() {
+    setCartItems([]);
   }
 
   function addToCart(dish) {
@@ -87,6 +94,30 @@ export default function App() {
                 cartItems={cartItems}
                 onAddToCart={addToCart}
               />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <Checkout cartItems={cartItems} onClearCart={clearCart} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <OrderHistory cartItems={cartItems} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/:orderId"
+          element={
+            <ProtectedRoute>
+              <OrderTracking cartItems={cartItems} />
             </ProtectedRoute>
           }
         />

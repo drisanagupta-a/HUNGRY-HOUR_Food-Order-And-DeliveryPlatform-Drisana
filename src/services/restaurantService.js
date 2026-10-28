@@ -1,6 +1,20 @@
 import { requestJson } from "./authService.js";
 
 /**
+ * Safely extracts an array from various backend response formats
+ * (e.g., bare array, Spring Data Page { content: [...] }, or object wrappers).
+ */
+export function extractArray(response) {
+  if (Array.isArray(response)) return response;
+  if (response && Array.isArray(response.content)) return response.content;
+  if (response && Array.isArray(response.data)) return response.data;
+  if (response && Array.isArray(response.items)) return response.items;
+  if (response && Array.isArray(response.foodItems)) return response.foodItems;
+  if (response && Array.isArray(response.restaurants)) return response.restaurants;
+  return [];
+}
+
+/**
  * Fetch approved restaurants from the backend.
  * Endpoint: GET /api/customer/restaurants
  * Requires authenticated customer session (sb-access-token cookie).
@@ -14,7 +28,7 @@ export async function fetchRestaurants({ q, open } = {}) {
     params.append("open", String(open));
   }
   const queryString = params.toString() ? `?${params.toString()}` : "";
-  return requestJson(`/api/customer/restaurants${queryString}`, "GET");
+  return requestJson(`/api/customer/restaurants${queryString}`, "GET", undefined, true);
 }
 
 /**
@@ -28,6 +42,8 @@ export async function fetchRestaurantById(restaurantId) {
   return requestJson(
     `/api/customer/restaurants/${encodeURIComponent(restaurantId)}`,
     "GET",
+    undefined,
+    true,
   );
 }
 
@@ -53,6 +69,8 @@ export async function fetchRestaurantFoodItems(
   return requestJson(
     `/api/customer/restaurants/${encodeURIComponent(restaurantId)}/food-items${queryString}`,
     "GET",
+    undefined,
+    true,
   );
 }
 
@@ -60,6 +78,7 @@ export async function fetchRestaurantFoodItems(
  * Formats backend category enum into human-friendly category titles.
  */
 export function formatCategoryName(category) {
+  if (!category) return "Menu Items";
   const titles = {
     STARTER: "Starters",
     MAIN_COURSE: "Main Course",
@@ -70,7 +89,8 @@ export function formatCategoryName(category) {
     SNACK: "Snacks",
     OTHER: "Other Items",
   };
-  return titles[category] || category || "Menu Items";
+  const key = String(category).trim().toUpperCase();
+  return titles[key] || category || "Menu Items";
 }
 
 /**
@@ -103,11 +123,11 @@ export function adaptFoodItem(raw) {
   if (!raw) return null;
 
   return {
-    id: raw.id,
+    id: raw.id || `${raw.name || "dish"}-${raw.restaurantId || ""}`,
     restaurantId: raw.restaurantId,
     name: raw.name || "Unnamed Dish",
     description: raw.description || "",
-    price: typeof raw.price === "number" ? raw.price : 0,
+    price: typeof raw.price === "number" ? raw.price : Number(raw.price) || 0,
     image: raw.imageUrl || raw.image || "",
     available: raw.available !== false,
     category: formatCategoryName(raw.category),

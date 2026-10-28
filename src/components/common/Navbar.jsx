@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Heart, LogOut, Menu, ShoppingBag, User, X } from "lucide-react";
+import { ChevronDown, Heart, LogOut, Menu, PackageCheck, ShoppingBag, User, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, logOut } from "../../services/authService.js";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -159,16 +159,28 @@ export default function Navbar({
                 ))}
 
                 {user && (
-                  <li className="mobile-only-link">
-                    <Link
-                      to="/profile"
-                      className="nav-link mobile-profile-link"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <User size={16} aria-hidden="true" />
-                      <span>My Profile</span>
-                    </Link>
-                  </li>
+                  <>
+                    <li className="mobile-only-link">
+                      <Link
+                        to="/profile"
+                        className="nav-link mobile-profile-link"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <User size={16} aria-hidden="true" />
+                        <span>My Profile</span>
+                      </Link>
+                    </li>
+                    <li className="mobile-only-link">
+                      <Link
+                        to="/orders"
+                        className="nav-link mobile-profile-link"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <PackageCheck size={16} aria-hidden="true" />
+                        <span>My Orders</span>
+                      </Link>
+                    </li>
+                  </>
                 )}
 
                 {showLogout && user && (
@@ -269,12 +281,23 @@ export default function Navbar({
                       <span>Subtotal</span>
                       <strong>₹{cartSubtotal}</strong>
                     </p>
+                    <div className="cart-checkout-action" style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #eee4d6" }}>
+                      <Link
+                        to="/checkout"
+                        onClick={() => setCartIsOpen(false)}
+                        className="block w-full text-center rounded-full bg-[#c92332] py-2.5 text-xs font-bold text-white shadow transition hover:bg-[#a81725]"
+                        style={{ display: "block", width: "100%", textAlign: "center", borderRadius: "9999px", background: "#c92332", padding: "10px 14px", color: "#fff", fontWeight: "700", textDecoration: "none" }}
+                      >
+                        Checkout • ₹{cartSubtotal}
+                      </Link>
+                    </div>
                   </>
                 )}
-                <p className="cart-note">
-                  This sample bag is for browsing only. Checkout isn&apos;t
-                  connected.
-                </p>
+                {cartItems.length === 0 && (
+                  <p className="cart-note">
+                    Add dishes from any restaurant to start your order.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -321,6 +344,15 @@ export default function Navbar({
                   >
                     <User size={16} aria-hidden="true" />
                     <span>My Profile</span>
+                  </Link>
+                  <Link
+                    to="/orders"
+                    className="account-dropdown-item"
+                    role="menuitem"
+                    onClick={() => setAccountMenuOpen(false)}
+                  >
+                    <PackageCheck size={16} aria-hidden="true" />
+                    <span>My Orders</span>
                   </Link>
                   <div className="account-dropdown-divider" />
                   <button

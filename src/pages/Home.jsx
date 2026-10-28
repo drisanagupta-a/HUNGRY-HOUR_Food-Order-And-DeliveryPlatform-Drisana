@@ -7,7 +7,7 @@ import CategorySection from "../components/home/CategorySection.jsx";
 import RestaurantSection from "../components/home/RestaurantSection.jsx";
 import PopularDishes from "../components/home/PopularDishes.jsx";
 import { foodCategories, mockDishes, mockRestaurants } from "../data/mockRestaurants.js";
-import { adaptRestaurant, fetchRestaurants } from "../services/restaurantService.js";
+import { adaptRestaurant, extractArray, fetchRestaurants } from "../services/restaurantService.js";
 import "../App.css";
 
 const promotions = [
@@ -142,8 +142,9 @@ export default function Home({
     fetchRestaurants({ q: searchText.trim() || undefined })
       .then((data) => {
         if (!isCurrent) return;
-        if (Array.isArray(data) && data.length > 0) {
-          setBackendRestaurants(data.map(adaptRestaurant));
+        const list = extractArray(data);
+        if (list.length > 0) {
+          setBackendRestaurants(list.map(adaptRestaurant).filter(Boolean));
         } else {
           setBackendRestaurants([]);
         }

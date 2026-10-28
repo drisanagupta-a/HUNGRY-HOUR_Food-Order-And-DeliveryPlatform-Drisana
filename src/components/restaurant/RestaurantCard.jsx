@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Heart, MapPin, Star, Utensils } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -7,12 +8,15 @@ export default function RestaurantCard({
   onToggleFavorite,
   detailsBasePath = "/restaurants",
 }) {
+  const [imageError, setImageError] = useState(false);
   const detailsPath = `${detailsBasePath}/${restaurant.id}`;
 
   const hasMeta =
     Boolean(restaurant.time) ||
     typeof restaurant.fee === "number" ||
     Boolean(restaurant.address);
+
+  const hasImage = Boolean(restaurant.image) && !imageError;
 
   return (
     <article className="restaurant-card">
@@ -22,12 +26,13 @@ export default function RestaurantCard({
           to={detailsPath}
           aria-label={`View ${restaurant.name} menu`}
         >
-          {restaurant.image ? (
+          {hasImage ? (
             <img
               className="restaurant-image"
               src={restaurant.image}
               alt={`${restaurant.name} food`}
               loading="lazy"
+              onError={() => setImageError(true)}
             />
           ) : (
             <div className="restaurant-image-placeholder" aria-hidden="true">
@@ -58,54 +63,53 @@ export default function RestaurantCard({
           <Heart
             size={18}
             fill={isFavorite ? "currentColor" : "none"}
+            stroke={isFavorite ? "none" : "currentColor"}
             aria-hidden="true"
           />
         </button>
       </div>
 
-      <Link
-        className="restaurant-card-copy restaurant-card-details-link"
-        to={detailsPath}
-        aria-label={`View ${restaurant.name} details and menu`}
-      >
+      <div className="restaurant-content">
         <div className="restaurant-title-row">
-          <h3>{restaurant.name}</h3>
+          <h3 className="restaurant-title">
+            <Link to={detailsPath}>{restaurant.name}</Link>
+          </h3>
           {restaurant.rating !== undefined && (
-            <span className="rating-pill">
+            <span className="restaurant-rating">
               <Star size={13} fill="currentColor" aria-hidden="true" />
               {restaurant.rating}
             </span>
           )}
         </div>
 
-        {restaurant.cuisine && (
-          <p className="restaurant-cuisine">{restaurant.cuisine}</p>
-        )}
+        <p className="restaurant-cuisine">{restaurant.cuisine}</p>
 
         {hasMeta && (
           <div className="restaurant-meta">
-            {restaurant.time && <span>{restaurant.time}</span>}
-            {restaurant.time && typeof restaurant.fee === "number" && (
-              <i aria-hidden="true">·</i>
-            )}
-            {typeof restaurant.fee === "number" && (
+            {restaurant.time && (
               <span>
-                {restaurant.fee === 0
-                  ? "Free delivery"
-                  : `₹${restaurant.fee} delivery`}
+                {restaurant.time}
               </span>
             )}
-            {!restaurant.time &&
-              typeof restaurant.fee !== "number" &&
-              restaurant.address && (
-                <span className="flex items-center gap-1 text-xs truncate">
-                  <MapPin size={12} aria-hidden="true" />
-                  {restaurant.address}
+            {typeof restaurant.fee === "number" && (
+              <>
+                {restaurant.time && <span className="meta-dot">·</span>}
+                <span>
+                  {restaurant.fee === 0
+                    ? "Free delivery"
+                    : `₹${restaurant.fee} delivery`}
                 </span>
-              )}
+              </>
+            )}
+            {restaurant.address && !restaurant.time && (
+              <span className="flex items-center gap-1 text-xs text-[#746C61] truncate">
+                <MapPin size={12} aria-hidden="true" />
+                {restaurant.address}
+              </span>
+            )}
           </div>
         )}
-      </Link>
+      </div>
     </article>
   );
 }

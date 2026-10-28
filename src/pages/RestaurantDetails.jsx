@@ -8,6 +8,7 @@ import { mockDishes, mockRestaurants } from "../data/mockRestaurants.js";
 import {
   adaptFoodItem,
   adaptRestaurant,
+  extractArray,
   fetchRestaurantById,
   fetchRestaurantFoodItems,
 } from "../services/restaurantService.js";
@@ -27,6 +28,7 @@ export default function RestaurantDetails({
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [heroImageError, setHeroImageError] = useState(false);
 
   useEffect(() => {
     let isCurrent = true;
@@ -51,12 +53,11 @@ export default function RestaurantDetails({
           resolvedRestaurant = adaptRestaurant(restaurantResult.value);
         }
 
-        if (
-          menuResult.status === "fulfilled" &&
-          Array.isArray(menuResult.value) &&
-          menuResult.value.length > 0
-        ) {
-          resolvedMenu = menuResult.value.map(adaptFoodItem);
+        if (menuResult.status === "fulfilled" && menuResult.value) {
+          const rawItems = extractArray(menuResult.value);
+          if (rawItems.length > 0) {
+            resolvedMenu = rawItems.map(adaptFoodItem).filter(Boolean);
+          }
         }
 
         // If backend did not return the restaurant, check fallback mock catalog
@@ -113,7 +114,7 @@ export default function RestaurantDetails({
 
   const menuCategories = [
     "All",
-    ...new Set(menuItems.map((dish) => dish.category)),
+    ...new Set(menuItems.map((dish) => dish.category).filter(Boolean)),
   ];
 
   const filteredMenuItems =
@@ -123,7 +124,7 @@ export default function RestaurantDetails({
 
   const displayedCategories =
     selectedCategory === "All"
-      ? [...new Set(menuItems.map((dish) => dish.category))]
+      ? [...new Set(menuItems.map((dish) => dish.category).filter(Boolean))]
       : [selectedCategory];
 
   return (
@@ -152,10 +153,11 @@ export default function RestaurantDetails({
           <>
             <section className="restaurant-detail-hero">
               <div className="restaurant-detail-hero-image">
-                {restaurant.image ? (
+                {restaurant.image && !heroImageError ? (
                   <img
                     src={restaurant.image}
                     alt={`${restaurant.name} dishes`}
+                    onError={() => setHeroImageError(true)}
                   />
                 ) : (
                   <div
@@ -236,7 +238,7 @@ export default function RestaurantDetails({
                 <p>{menuItems.length} menu favorites</p>
               </div>
 
-              {menuCategories.length > 2 && (
+              {menuCategories.length > 1 && (
                 <div className="mb-6 flex flex-wrap gap-2">
                   {menuCategories.map((cat) => (
                     <button
@@ -280,7 +282,7 @@ export default function RestaurantDetails({
                       <div className="restaurant-menu-grid">
                         {itemsInCategory.map((dish) => (
                           <MenuItem
-                            key={dish.id}
+                            key={dish.id || `${dish.name}-${dish.category}`}
                             dish={dish}
                             onAddToCart={onAddToCart}
                           />
