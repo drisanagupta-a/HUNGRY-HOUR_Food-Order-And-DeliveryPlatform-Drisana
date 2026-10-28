@@ -4309,7 +4309,7 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: 58%;
+  width: 55%;
   min-width: 320px;
   pointer-events: none;
   z-index: 2;
@@ -4324,97 +4324,136 @@
   backface-visibility: hidden;
 }
 
-/* 1. Olive Leaves Accent at top edge */
+/* 1. Checkered Cloth SVG in upper-right corner behind bowl/bread */
+.comp-cloth {
+  top: -24px;
+  right: -10px;
+  width: 140px;
+  height: auto;
+  transform: rotate(5deg);
+  z-index: 1;
+  opacity: 0.95;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.08));
+}
+
+/* 2. Food Bowl / Pita Bread SVG in upper right corner with intentional edge crop */
+.comp-bowlbread {
+  top: -20px;
+  right: -15px;
+  width: 155px;
+  height: auto;
+  z-index: 3;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.16));
+}
+
+/* 3. Mediterranean Food Plate in upper area to the left of the bowl, separated without excessive overlap */
+.comp-plate {
+  top: 14px;
+  right: 160px;
+  width: 130px;
+  height: 130px;
+  z-index: 2;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.12));
+}
+
+/* 4. Olive Leaves Accent at top edge above the plate */
 .comp-olive-leaves {
   top: -10px;
-  right: 235px;
-  width: clamp(44px, 5.5vw, 68px);
+  right: 260px;
+  width: 52px;
   height: auto;
-  transform: rotate(-12deg);
+  transform: rotate(-16deg);
   z-index: 1;
-  opacity: 0.9;
+  opacity: 0.88;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.08));
 }
 
-/* 2. Checkered Cloth SVG in upper right */
-.comp-cloth {
-  top: -15px;
-  right: 35px;
-  width: clamp(150px, 19vw, 225px);
-  height: auto;
-  transform: rotate(3deg);
-  z-index: 2;
-  opacity: 0.96;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.09));
-}
-
-/* 3. Mediterranean Food Plate */
-.comp-plate {
-  top: 15px;
-  right: 140px;
-  width: clamp(105px, 13vw, 155px);
-  height: auto;
-  z-index: 3;
-  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.13));
-}
-
-/* 4. Food Bowl / Pita Bread SVG extending at upper right */
-.comp-bowlbread {
-  top: -20px;
-  right: -25px;
-  width: clamp(170px, 22vw, 255px);
-  height: auto;
-  z-index: 4;
-  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.17));
-}
-
-/* 5. Olive Bowl decoration */
-.comp-olive-bowl {
-  bottom: 22px;
-  right: 155px;
-  width: clamp(55px, 7vw, 85px);
-  height: auto;
-  z-index: 5;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.11));
-}
-
-/* 6. Orange Drink Asset */
+/* 5. Orange Drink in its own clear lower-right position, completely clear of the bowl above */
 .comp-orange-drink {
   bottom: 12px;
-  right: 45px;
-  width: clamp(65px, 8.5vw, 98px);
+  right: 24px;
+  width: 82px;
   height: auto;
-  z-index: 6;
+  z-index: 4;
   filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.14));
 }
 
-/* 7. Lemon Accent */
-.comp-lemon {
-  bottom: 6px;
-  right: 125px;
-  width: clamp(26px, 3.2vw, 40px);
+/* 6. Olive Bowl in lower area below the plate, separated from the drink */
+.comp-olive-bowl {
+  bottom: 20px;
+  right: 126px;
+  width: 65px;
   height: auto;
-  z-index: 6;
+  z-index: 4;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.11));
+}
+
+/* 7. Lemon Accent between olive bowl and orange drink */
+.comp-lemon {
+  bottom: 8px;
+  right: 92px;
+  width: 30px;
+  height: auto;
+  z-index: 5;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.1));
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 1200px) {
   .yellow-banner-composition {
-    width: 65%;
+    width: 52%;
+  }
+  .comp-cloth {
+    width: 120px;
+  }
+  .comp-bowlbread {
+    width: 135px;
+  }
+  .comp-plate {
+    width: 110px;
+    height: 110px;
+    right: 135px;
+  }
+  .comp-olive-leaves {
+    right: 220px;
+    width: 42px;
+  }
+  .comp-orange-drink {
+    width: 70px;
+    right: 18px;
+  }
+  .comp-olive-bowl {
+    width: 55px;
+    right: 105px;
+  }
+  .comp-lemon {
+    width: 25px;
+    right: 76px;
   }
 }
 
 @media (max-width: 767px) {
+  .hero-yellow-banner {
+    padding: 24px 18px;
+    min-height: 220px;
+  }
+  .yellow-banner-content {
+    max-width: 100%;
+  }
   .yellow-banner-composition {
-    width: 72%;
-    opacity: 0.42;
+    width: 68%;
+    opacity: 0.35;
   }
 }
 
 @media (max-width: 480px) {
   .yellow-banner-composition {
-    opacity: 0.28;
+    opacity: 0.22;
   }
+}
+
+/* Restaurants Page Header */
+.restaurants-page-header {
+  margin-bottom: 28px;
 }
 
 /* Pink Promotional Card */

@@ -46,18 +46,34 @@ export default function Sidebar({
     }
   }
 
-  const isHome = location.pathname === "/home" || location.pathname === "/";
+  const isPreview = location.pathname.startsWith("/dev-dashboard-preview");
+  const homeHref = isPreview ? "/dev-dashboard-preview#top" : "/home#top";
+  const restaurantsHref = isPreview
+    ? "/dev-dashboard-preview/restaurants"
+    : "/restaurants";
+  const isHome =
+    (location.pathname === "/home" ||
+      location.pathname === "/" ||
+      location.pathname === "/dev-dashboard-preview") &&
+    activeSection === "home";
+  const isRestaurants =
+    location.pathname === "/restaurants" ||
+    location.pathname === "/dev-dashboard-preview/restaurants" ||
+    activeSection === "restaurants";
 
   const navItems = [
     {
       id: "home",
       label: "Home",
       icon: Home,
-      href: "/home#top",
-      active: isHome && activeSection === "home",
+      href: homeHref,
+      active: isHome,
       onClick: () => {
         onSelectSection("home");
-        if (isHome) {
+        if (
+          location.pathname === "/home" ||
+          location.pathname === "/dev-dashboard-preview"
+        ) {
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
         onClose();
@@ -67,14 +83,10 @@ export default function Sidebar({
       id: "restaurants",
       label: "Restaurants",
       icon: UtensilsCrossed,
-      href: "/home#restaurants",
-      active: isHome && activeSection === "restaurants",
+      href: restaurantsHref,
+      active: isRestaurants,
       onClick: () => {
         onSelectSection("restaurants");
-        const el = document.getElementById("restaurants");
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth" });
-        }
         onClose();
       },
     },

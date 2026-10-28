@@ -10,6 +10,7 @@ import loginHeading from "../../assets/LOG IN.svg";
 import signupHeading from "../../assets/signup.svg";
 
 export default function AuthLayout({ eyebrow, title, children }) {
+  const isLogin = title === "Log in";
   const headingAsset =
     title === "Log in"
       ? loginHeading
@@ -18,26 +19,51 @@ export default function AuthLayout({ eyebrow, title, children }) {
         : null;
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#FDE4BF] text-[#000000]">
-      <div className="mx-auto grid min-h-screen max-w-[1440px] lg:grid-cols-2">
+    <main
+      className={`min-h-screen bg-[#FDE4BF] text-[#000000] ${
+        isLogin
+          ? "auth-login-page overflow-hidden lg:h-screen lg:max-h-screen"
+          : "overflow-hidden"
+      }`}
+    >
+      <div
+        className={`mx-auto grid max-w-[1440px] lg:grid-cols-2 ${
+          isLogin
+            ? "h-full min-h-screen lg:h-screen lg:min-h-0"
+            : "min-h-screen"
+        }`}
+      >
+        {/* Left Section: Decorative Food Assets & Brand Logo */}
         <section
           aria-label="Hungry Hour"
-          className="relative min-h-[390px] overflow-hidden sm:min-h-[470px] lg:min-h-screen"
+          className={`relative overflow-hidden ${
+            isLogin
+              ? "min-h-[380px] sm:min-h-[440px] lg:h-screen lg:min-h-0"
+              : "min-h-[390px] sm:min-h-[470px] lg:min-h-screen"
+          }`}
         >
-          {/* Top-center hanging leaf branch (clear of the logo) */}
+          {/* Top hanging leaf branch */}
           <img
             src={oliveLeaves}
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute -top-4 left-[46%] z-10 w-36 sm:w-48 lg:w-56"
+            className={`pointer-events-none absolute z-10 ${
+              isLogin
+                ? "-top-5 left-[42%] w-44 sm:w-60 lg:w-72"
+                : "-top-4 left-[46%] w-36 sm:w-48 lg:w-56"
+            }`}
           />
 
-          {/* Left edge leaf branch (below logo, behind drink) */}
+          {/* Left edge leaf branch (behind drink) */}
           <img
             src={oliveLeavesRight}
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute left-0 top-[40%] z-10 w-36 -translate-x-4 -rotate-6 sm:w-44 lg:w-52"
+            className={`pointer-events-none absolute z-10 -rotate-6 ${
+              isLogin
+                ? "-left-4 top-[36%] w-44 sm:w-56 lg:w-64"
+                : "left-0 top-[40%] w-36 -translate-x-4 sm:w-44 lg:w-52"
+            }`}
           />
 
           {/* Bottom-right leaf branch rising near plate */}
@@ -45,14 +71,22 @@ export default function AuthLayout({ eyebrow, title, children }) {
             src={oliveLeavesDiagonal}
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute bottom-0 left-[46%] z-10 w-36 sm:w-48 lg:w-56"
+            className={`pointer-events-none absolute bottom-0 z-10 ${
+              isLogin
+                ? "left-[48%] w-44 sm:w-60 lg:w-72"
+                : "left-[46%] w-36 sm:w-48 lg:w-56"
+            }`}
           />
 
           {/* HUNGRY HOUR Logo in upper-left area */}
           <img
             src={hungryHourLogo}
             alt="HUNGRY HOUR"
-            className="relative z-20 ml-6 mt-7 h-auto w-52 sm:ml-10 sm:mt-10 sm:w-60 lg:ml-12 lg:mt-12 lg:w-64"
+            className={`relative z-20 h-auto ${
+              isLogin
+                ? "ml-6 mt-6 w-52 sm:ml-10 sm:mt-8 sm:w-60 lg:ml-12 lg:mt-10 lg:w-64"
+                : "ml-6 mt-7 w-52 sm:ml-10 sm:mt-10 sm:w-60 lg:ml-12 lg:mt-12 lg:w-64"
+            }`}
           />
 
           {/* Orange drink below logo on the left */}
@@ -60,7 +94,11 @@ export default function AuthLayout({ eyebrow, title, children }) {
             src={orangeDrink}
             alt=""
             aria-hidden="true"
-            className="absolute left-[12%] top-[25%] z-20 w-28 sm:w-36 lg:w-40"
+            className={`pointer-events-none absolute z-20 drop-shadow-md ${
+              isLogin
+                ? "left-[10%] top-[24%] w-36 sm:w-44 lg:w-56"
+                : "left-[12%] top-[25%] w-28 sm:w-36 lg:w-40"
+            }`}
           />
 
           {/* Olive bowl to the right of the drink */}
@@ -68,18 +106,26 @@ export default function AuthLayout({ eyebrow, title, children }) {
             src={oliveBowl}
             alt=""
             aria-hidden="true"
-            className="absolute left-[36%] top-[27%] z-20 w-20 sm:w-26 lg:w-28"
+            className={`pointer-events-none absolute z-20 drop-shadow-md ${
+              isLogin
+                ? "left-[44%] top-[24%] w-28 sm:w-36 lg:w-44"
+                : "left-[36%] top-[27%] w-20 sm:w-26 lg:w-28"
+            }`}
           />
 
-          {/* Main food plate prominently in the lower-middle area */}
+          {/* Main tomato toast / food plate prominently in the lower area */}
           <img
             src={foodPlate}
             alt=""
             aria-hidden="true"
-            className={`absolute bottom-[6%] z-20 w-[clamp(10rem,28vw,23rem)] sm:w-[320px] lg:w-[360px] ${
-              title === "Sign up"
-                ? "left-[20%] sm:left-[22%] lg:left-[24%]"
-                : "left-[17%]"
+            className={`pointer-events-none absolute z-20 drop-shadow-xl ${
+              isLogin
+                ? "bottom-[1%] left-[16%] w-[clamp(14rem,30vw,28rem)] sm:w-[380px] lg:w-[460px]"
+                : `bottom-[6%] w-[clamp(10rem,28vw,23rem)] sm:w-[320px] lg:w-[360px] ${
+                    title === "Sign up"
+                      ? "left-[20%] sm:left-[22%] lg:left-[24%]"
+                      : "left-[17%]"
+                  }`
             }`}
           />
 
@@ -88,17 +134,37 @@ export default function AuthLayout({ eyebrow, title, children }) {
             src={lemon}
             alt=""
             aria-hidden="true"
-            className="absolute bottom-0 left-0 z-30 w-28 sm:w-36 lg:w-44"
+            className={`pointer-events-none absolute z-30 drop-shadow-md ${
+              isLogin
+                ? "-bottom-3 -left-3 w-32 sm:w-44 lg:w-52"
+                : "bottom-0 left-0 w-28 sm:w-36 lg:w-44"
+            }`}
           />
         </section>
 
-        <section className="flex items-center justify-center px-4 py-8 sm:px-8 sm:py-12 lg:px-12 lg:py-16">
-          <div className="w-full max-w-[520px] rounded-[2rem] bg-[#FEF4E5] px-6 py-9 shadow-[0_20px_70px_rgba(75,48,26,0.12)] sm:px-10 sm:py-12 lg:px-14 lg:py-14">
+        {/* Right Section: Form Container */}
+        <section
+          className={`flex items-center justify-center px-4 ${
+            isLogin
+              ? "py-4 sm:py-6 lg:px-8 lg:py-6"
+              : "py-8 sm:py-12 lg:px-12 lg:py-16"
+          }`}
+        >
+          <div
+            className={`w-full max-w-[500px] rounded-[2rem] bg-[#FEF4E5] shadow-[0_20px_70px_rgba(75,48,26,0.12)] ${
+              isLogin
+                ? "login-form-card px-6 py-6 sm:px-9 sm:py-7 lg:px-11 lg:py-7"
+                : "px-6 py-9 sm:px-10 sm:py-12 lg:px-14 lg:py-14"
+            }`}
+          >
             {/* Small yellow decorative brand asset */}
-            <div className="mb-3 flex justify-center text-[#F4AB0A]" aria-hidden="true">
+            <div
+              className={`${isLogin ? "mb-1.5" : "mb-3"} flex justify-center text-[#F4AB0A]`}
+              aria-hidden="true"
+            >
               <svg
-                width="24"
-                height="18"
+                width={isLogin ? "22" : "24"}
+                height={isLogin ? "16" : "18"}
                 viewBox="0 0 24 18"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -119,20 +185,28 @@ export default function AuthLayout({ eyebrow, title, children }) {
             </div>
 
             <p
-              className="text-center text-[18px] font-normal uppercase tracking-[0.08em] text-[#5F584F]"
+              className={`text-center font-normal uppercase tracking-[0.08em] text-[#5F584F] ${
+                isLogin ? "text-[14px] sm:text-[16px]" : "text-[18px]"
+              }`}
               style={{ fontFamily: "Inter, Arial, sans-serif" }}
             >
               {eyebrow}
             </p>
             <h1
-              className="mb-7 mt-2 flex justify-center text-center text-[clamp(3rem,6.5vw,62.83px)] font-normal uppercase leading-[1.05] text-[#000000]"
+              className={`flex justify-center text-center font-normal uppercase leading-[1.05] text-[#000000] ${
+                isLogin
+                  ? "mb-4 mt-1 text-[clamp(2.4rem,4.5vw,46px)]"
+                  : "mb-7 mt-2 text-[clamp(3rem,6.5vw,62.83px)]"
+              }`}
               style={{ fontFamily: '"Maiden Orange", Georgia, serif' }}
             >
               {headingAsset ? (
                 <img
                   src={headingAsset}
                   alt={title}
-                  className="mx-auto block h-auto w-[min(100%,260px)]"
+                  className={`mx-auto block h-auto ${
+                    isLogin ? "w-[min(100%,205px)]" : "w-[min(100%,260px)]"
+                  }`}
                 />
               ) : (
                 title

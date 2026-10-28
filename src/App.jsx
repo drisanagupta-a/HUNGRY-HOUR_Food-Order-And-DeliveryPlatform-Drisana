@@ -4,6 +4,7 @@ import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Profile from "./pages/Profile.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
+import Restaurants from "./pages/Restaurants.jsx";
 import RestaurantDetails from "./pages/RestaurantDetails.jsx";
 import Checkout from "./pages/Checkout.jsx";
 import OrderHistory from "./pages/OrderHistory.jsx";
@@ -87,6 +88,14 @@ export default function App() {
           }
         />
         <Route
+          path="/restaurants"
+          element={
+            <ProtectedRoute>
+              <Restaurants cartItems={cartItems} onAddToCart={addToCart} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/restaurants/:restaurantId"
           element={
             <ProtectedRoute>
@@ -127,6 +136,16 @@ export default function App() {
               path="/dev-dashboard-preview"
               element={
                 <Home
+                  cartItems={cartItems}
+                  onAddToCart={addToCart}
+                  isDevelopmentPreview
+                />
+              }
+            />
+            <Route
+              path="/dev-dashboard-preview/restaurants"
+              element={
+                <Restaurants
                   cartItems={cartItems}
                   onAddToCart={addToCart}
                   isDevelopmentPreview

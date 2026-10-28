@@ -45,7 +45,7 @@ export default function Login() {
   return (
     <AuthLayout eyebrow="Welcome back" title="Log in">
       <form
-        className="space-y-5"
+        className="space-y-3.5 sm:space-y-4"
         onSubmit={handleSubmit(handleLogin, () => setFormMessage(""))}
         noValidate
       >
@@ -57,6 +57,7 @@ export default function Login() {
           placeholder="you@example.com"
           register={register("email")}
           error={errors.email?.message}
+          compact
         />
 
         <FormField
@@ -67,6 +68,7 @@ export default function Login() {
           placeholder="Enter your password"
           register={register("password")}
           error={errors.password?.message}
+          compact
           trailingContent={
             <button
               type="button"
@@ -84,8 +86,8 @@ export default function Login() {
           }
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <label className="flex items-center gap-2 text-sm text-[#5F584F]">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+          <label className="flex items-center gap-2 text-xs sm:text-sm text-[#5F584F] cursor-pointer">
             <input
               type="checkbox"
               className="h-4 w-4 rounded border-[#DDD3C7] accent-[#D1011F] focus-visible:ring-2 focus-visible:ring-[#D1011F]"
@@ -95,14 +97,14 @@ export default function Login() {
           </label>
           <Link
             to="/reset-password"
-            className="text-sm font-semibold text-[#D1011F] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F]"
+            className="text-xs sm:text-sm font-semibold text-[#D1011F] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F]"
           >
             Forgot password?
           </Link>
         </div>
 
         {formMessage && (
-          <p className="text-sm leading-6 text-[#746C61]" role="status">
+          <p className="text-xs sm:text-sm leading-5 text-[#D1011F]" role="status">
             {formMessage}
           </p>
         )}
@@ -110,7 +112,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-xl bg-[#D1011F] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#B9001B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-xl bg-[#D1011F] px-4 py-2.5 sm:py-3 text-sm font-bold text-white transition hover:bg-[#B9001B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 shadow-sm"
         >
           {isSubmitting ? "Logging in..." : "Log In"}
         </button>
@@ -118,15 +120,15 @@ export default function Login() {
         <button
           type="button"
           onClick={handleGuestLogin}
-          className="w-full rounded-xl border border-[#DDD3C7] px-4 py-3 text-sm font-bold text-[#24211d] transition hover:bg-[#fffaf2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2"
+          className="w-full rounded-xl border border-[#DDD3C7] px-4 py-2.5 sm:py-3 text-sm font-bold text-[#24211d] transition hover:bg-[#fffaf2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2"
         >
           Continue as Guest
         </button>
       </form>
 
-      <SocialLogin />
+      <SocialLogin compact />
 
-      <p className="mt-6 text-center text-sm text-[#5F584F]">
+      <p className="mt-3.5 sm:mt-4 text-center text-xs sm:text-sm text-[#5F584F]">
         Don&apos;t have an account?{" "}
         <Link
           to="/signup"

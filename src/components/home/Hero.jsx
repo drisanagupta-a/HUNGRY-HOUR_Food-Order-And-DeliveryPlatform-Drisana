@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import clothSvg from "../../assets/images/cloth.svg";
 import bowlBreadSvg from "../../assets/images/bowlbread.svg";
 import foodPlateImg from "../../assets/Mediterranean Sticker Food Collection 2.png";
@@ -22,9 +23,9 @@ export default function Hero() {
               Freshly cooked meals from your favorite local kitchens, delivered straight to your door with love.
             </p>
             <div className="banner-cta-wrap">
-              <a href="#restaurants" className="banner-order-button">
+              <Link to="/restaurants" className="banner-order-button">
                 Order Now <span aria-hidden="true">→</span>
-              </a>
+              </Link>
             </div>
           </div>
 
