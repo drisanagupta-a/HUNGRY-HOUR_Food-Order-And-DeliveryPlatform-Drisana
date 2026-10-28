@@ -11,6 +11,8 @@ import signupHeading from "../../assets/signup.svg";
 
 export default function AuthLayout({ eyebrow, title, children }) {
   const isLogin = title === "Log in";
+  const isSignup = title === "Sign up";
+  const isAuth = isLogin || isSignup;
   const headingAsset =
     title === "Log in"
       ? loginHeading
@@ -22,23 +24,19 @@ export default function AuthLayout({ eyebrow, title, children }) {
     <main
       className={`min-h-screen bg-[#FDE4BF] text-[#000000] ${
         isLogin
-          ? "auth-login-page overflow-hidden lg:h-screen lg:max-h-screen"
-          : "overflow-hidden"
+          ? "auth-login-page"
+          : isSignup
+            ? "auth-signup-page"
+            : "overflow-hidden"
       }`}
     >
-      <div
-        className={`mx-auto grid max-w-[1440px] lg:grid-cols-2 ${
-          isLogin
-            ? "h-full min-h-screen lg:h-screen lg:min-h-0"
-            : "min-h-screen"
-        }`}
-      >
+      <div className="mx-auto grid min-h-screen max-w-[1440px] lg:grid-cols-2">
         {/* Left Section: Decorative Food Assets & Brand Logo */}
         <section
           aria-label="Hungry Hour"
           className={`relative overflow-hidden ${
-            isLogin
-              ? "min-h-[380px] sm:min-h-[440px] lg:h-screen lg:min-h-0"
+            isAuth
+              ? "min-h-[360px] sm:min-h-[420px] lg:min-h-screen"
               : "min-h-[390px] sm:min-h-[470px] lg:min-h-screen"
           }`}
         >
@@ -48,8 +46,8 @@ export default function AuthLayout({ eyebrow, title, children }) {
             alt=""
             aria-hidden="true"
             className={`pointer-events-none absolute z-10 ${
-              isLogin
-                ? "-top-5 left-[42%] w-44 sm:w-60 lg:w-72"
+              isAuth
+                ? "food-anim-leaves -top-5 left-[48%] w-40 sm:w-48 lg:w-56"
                 : "-top-4 left-[46%] w-36 sm:w-48 lg:w-56"
             }`}
           />
@@ -60,8 +58,8 @@ export default function AuthLayout({ eyebrow, title, children }) {
             alt=""
             aria-hidden="true"
             className={`pointer-events-none absolute z-10 -rotate-6 ${
-              isLogin
-                ? "-left-4 top-[36%] w-44 sm:w-56 lg:w-64"
+              isAuth
+                ? "food-anim-leaves -left-3 top-[44%] w-36 sm:w-44 lg:w-52"
                 : "left-0 top-[40%] w-36 -translate-x-4 sm:w-44 lg:w-52"
             }`}
           />
@@ -72,8 +70,8 @@ export default function AuthLayout({ eyebrow, title, children }) {
             alt=""
             aria-hidden="true"
             className={`pointer-events-none absolute bottom-0 z-10 ${
-              isLogin
-                ? "left-[48%] w-44 sm:w-60 lg:w-72"
+              isAuth
+                ? "food-anim-leaves right-[4%] w-36 sm:w-48 lg:w-56"
                 : "left-[46%] w-36 sm:w-48 lg:w-56"
             }`}
           />
@@ -83,60 +81,56 @@ export default function AuthLayout({ eyebrow, title, children }) {
             src={hungryHourLogo}
             alt="HUNGRY HOUR"
             className={`relative z-20 h-auto ${
-              isLogin
-                ? "ml-6 mt-6 w-52 sm:ml-10 sm:mt-8 sm:w-60 lg:ml-12 lg:mt-10 lg:w-64"
+              isAuth
+                ? "ml-8 sm:ml-12 mt-8 sm:mt-10 w-52 sm:w-60 lg:w-64"
                 : "ml-6 mt-7 w-52 sm:ml-10 sm:mt-10 sm:w-60 lg:ml-12 lg:mt-12 lg:w-64"
             }`}
           />
 
-          {/* Orange drink below logo on the left */}
+          {/* Orange drink clearly on the left below logo */}
           <img
             src={orangeDrink}
             alt=""
             aria-hidden="true"
             className={`pointer-events-none absolute z-20 drop-shadow-md ${
-              isLogin
-                ? "left-[10%] top-[24%] w-36 sm:w-44 lg:w-56"
+              isAuth
+                ? "food-anim-juice left-[8%] top-[26%] w-32 sm:w-36 lg:w-44"
                 : "left-[12%] top-[25%] w-28 sm:w-36 lg:w-40"
             }`}
           />
 
-          {/* Olive bowl to the right of the drink */}
+          {/* Olive bowl positioned clearly beside the drink and above the toast plate */}
           <img
             src={oliveBowl}
             alt=""
             aria-hidden="true"
             className={`pointer-events-none absolute z-20 drop-shadow-md ${
-              isLogin
-                ? "left-[44%] top-[24%] w-28 sm:w-36 lg:w-44"
+              isAuth
+                ? "food-anim-bowl left-[46%] top-[20%] w-24 sm:w-28 lg:w-32"
                 : "left-[36%] top-[27%] w-20 sm:w-26 lg:w-28"
             }`}
           />
 
-          {/* Main tomato toast / food plate prominently in the lower area */}
+          {/* Tomato toast / food plate toward lower-middle area (scaled so it does not cover orange juice) */}
           <img
             src={foodPlate}
             alt=""
             aria-hidden="true"
             className={`pointer-events-none absolute z-20 drop-shadow-xl ${
-              isLogin
-                ? "bottom-[1%] left-[16%] w-[clamp(14rem,30vw,28rem)] sm:w-[380px] lg:w-[460px]"
-                : `bottom-[6%] w-[clamp(10rem,28vw,23rem)] sm:w-[320px] lg:w-[360px] ${
-                    title === "Sign up"
-                      ? "left-[20%] sm:left-[22%] lg:left-[24%]"
-                      : "left-[17%]"
-                  }`
+              isAuth
+                ? "food-anim-plate bottom-[4%] left-[22%] sm:left-[26%] w-[clamp(11rem,22vw,19rem)] sm:w-[270px] lg:w-[310px]"
+                : "bottom-[6%] left-[17%] w-[clamp(10rem,28vw,23rem)] sm:w-[320px] lg:w-[360px]"
             }`}
           />
 
-          {/* Lemon illustration partially cropped near bottom-left corner */}
+          {/* Lemon illustration with subtle intentional corner edge-cropping */}
           <img
             src={lemon}
             alt=""
             aria-hidden="true"
             className={`pointer-events-none absolute z-30 drop-shadow-md ${
-              isLogin
-                ? "-bottom-3 -left-3 w-32 sm:w-44 lg:w-52"
+              isAuth
+                ? "food-anim-lemon -bottom-2 -left-2 w-24 sm:w-32 lg:w-38"
                 : "bottom-0 left-0 w-28 sm:w-36 lg:w-44"
             }`}
           />
@@ -146,25 +140,29 @@ export default function AuthLayout({ eyebrow, title, children }) {
         <section
           className={`flex items-center justify-center px-4 ${
             isLogin
-              ? "py-4 sm:py-6 lg:px-8 lg:py-6"
-              : "py-8 sm:py-12 lg:px-12 lg:py-16"
+              ? "py-3 sm:py-5 lg:px-6 lg:py-4"
+              : isSignup
+                ? "py-2.5 sm:py-4 lg:px-6 lg:py-3"
+                : "py-8 sm:py-12 lg:px-12 lg:py-16"
           }`}
         >
           <div
-            className={`w-full max-w-[500px] rounded-[2rem] bg-[#FEF4E5] shadow-[0_20px_70px_rgba(75,48,26,0.12)] ${
+            className={`w-full max-w-[450px] rounded-[1.75rem] bg-[#FEF4E5] shadow-[0_16px_45px_rgba(75,48,26,0.10)] ${
               isLogin
-                ? "login-form-card px-6 py-6 sm:px-9 sm:py-7 lg:px-11 lg:py-7"
-                : "px-6 py-9 sm:px-10 sm:py-12 lg:px-14 lg:py-14"
+                ? "login-form-card px-5 py-4 sm:px-7 sm:py-5 lg:px-8 lg:py-5"
+                : isSignup
+                  ? "signup-form-card px-5 py-3 sm:px-7 sm:py-4 lg:px-8 lg:py-3.5"
+                  : "px-6 py-9 sm:px-10 sm:py-12 lg:px-14 lg:py-14"
             }`}
           >
             {/* Small yellow decorative brand asset */}
             <div
-              className={`${isLogin ? "mb-1.5" : "mb-3"} flex justify-center text-[#F4AB0A]`}
+              className={`${isAuth ? "mb-1" : "mb-3"} flex justify-center text-[#F4AB0A]`}
               aria-hidden="true"
             >
               <svg
-                width={isLogin ? "22" : "24"}
-                height={isLogin ? "16" : "18"}
+                width={isAuth ? "20" : "24"}
+                height={isAuth ? "15" : "18"}
                 viewBox="0 0 24 18"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -186,7 +184,7 @@ export default function AuthLayout({ eyebrow, title, children }) {
 
             <p
               className={`text-center font-normal uppercase tracking-[0.08em] text-[#5F584F] ${
-                isLogin ? "text-[14px] sm:text-[16px]" : "text-[18px]"
+                isAuth ? "text-[11px] sm:text-[12px]" : "text-[18px]"
               }`}
               style={{ fontFamily: "Inter, Arial, sans-serif" }}
             >
@@ -195,8 +193,10 @@ export default function AuthLayout({ eyebrow, title, children }) {
             <h1
               className={`flex justify-center text-center font-normal uppercase leading-[1.05] text-[#000000] ${
                 isLogin
-                  ? "mb-4 mt-1 text-[clamp(2.4rem,4.5vw,46px)]"
-                  : "mb-7 mt-2 text-[clamp(3rem,6.5vw,62.83px)]"
+                  ? "mb-2.5 mt-0.5 text-[clamp(2rem,3.8vw,38px)]"
+                  : isSignup
+                    ? "mb-1.5 mt-0.5 text-[clamp(1.75rem,3.2vw,32px)]"
+                    : "mb-7 mt-2 text-[clamp(3rem,6.5vw,62.83px)]"
               }`}
               style={{ fontFamily: '"Maiden Orange", Georgia, serif' }}
             >
@@ -205,7 +205,11 @@ export default function AuthLayout({ eyebrow, title, children }) {
                   src={headingAsset}
                   alt={title}
                   className={`mx-auto block h-auto ${
-                    isLogin ? "w-[min(100%,205px)]" : "w-[min(100%,260px)]"
+                    isLogin
+                      ? "w-[min(100%,165px)]"
+                      : isSignup
+                        ? "w-[min(100%,170px)]"
+                        : "w-[min(100%,260px)]"
                   }`}
                 />
               ) : (

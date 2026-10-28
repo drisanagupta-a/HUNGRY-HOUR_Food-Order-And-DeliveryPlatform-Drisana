@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Subtle horizontal slide and fade-in entrance animation for login form card */
+/* Subtle horizontal slide and fade-in entrance animation for login & signup form cards */
 @keyframes loginSlideInRight {
   0% {
     opacity: 0;
@@ -12,24 +12,80 @@
   }
 }
 
-.login-form-card {
+.login-form-card,
+.signup-form-card {
   animation: loginSlideInRight 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: transform, opacity;
 }
 
+/* Fast, smooth entrance animation for food assets entering from the left */
+@keyframes foodAssetSlideInLeft {
+  0% {
+    opacity: 0.15;
+    transform: translate3d(-24px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.food-anim-leaves {
+  animation: foodAssetSlideInLeft 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 0ms;
+  will-change: transform, opacity;
+}
+
+.food-anim-juice {
+  animation: foodAssetSlideInLeft 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 85ms;
+  will-change: transform, opacity;
+}
+
+.food-anim-bowl {
+  animation: foodAssetSlideInLeft 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 170ms;
+  will-change: transform, opacity;
+}
+
+.food-anim-plate {
+  animation: foodAssetSlideInLeft 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 255ms;
+  will-change: transform, opacity;
+}
+
+.food-anim-lemon {
+  animation: foodAssetSlideInLeft 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 280ms;
+  will-change: transform, opacity;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .login-form-card {
+  .login-form-card,
+  .signup-form-card,
+  .food-anim-leaves,
+  .food-anim-juice,
+  .food-anim-bowl,
+  .food-anim-plate,
+  .food-anim-lemon {
     animation: none !important;
     transform: none !important;
     opacity: 1 !important;
   }
 }
 
-/* Scoped full-viewport layout for the login page on desktop */
+/* Scoped layout for auth pages on desktop:
+   - Content fits comfortably within 100vh so no desktop scrollbar appears.
+   - On very short screens, permits natural scrolling so the bottom is never clipped. */
+.auth-login-page,
+.auth-signup-page {
+  min-height: 100vh;
+}
+
 @media (min-width: 1024px) {
-  .auth-login-page {
-    height: 100vh !important;
-    max-height: 100vh !important;
-    overflow: hidden !important;
+  .auth-login-page,
+  .auth-signup-page {
+    min-height: 100vh;
+    overflow-y: auto;
   }
 }

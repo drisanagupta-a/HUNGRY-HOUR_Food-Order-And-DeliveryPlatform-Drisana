@@ -45,7 +45,7 @@ export default function Login() {
   return (
     <AuthLayout eyebrow="Welcome back" title="Log in">
       <form
-        className="space-y-3.5 sm:space-y-4"
+        className="space-y-2 sm:space-y-2.5"
         onSubmit={handleSubmit(handleLogin, () => setFormMessage(""))}
         noValidate
       >
@@ -78,33 +78,33 @@ export default function Login() {
               className="rounded-md p-1 text-[#746C61] hover:text-[#000000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F]"
             >
               {showPassword ? (
-                <EyeOff aria-hidden="true" size={18} />
+                <EyeOff aria-hidden="true" size={16} />
               ) : (
-                <Eye aria-hidden="true" size={18} />
+                <Eye aria-hidden="true" size={16} />
               )}
             </button>
           }
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-          <label className="flex items-center gap-2 text-xs sm:text-sm text-[#5F584F] cursor-pointer">
+        <div className="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
+          <label className="flex items-center gap-1.5 text-xs text-[#5F584F] cursor-pointer">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-[#DDD3C7] accent-[#D1011F] focus-visible:ring-2 focus-visible:ring-[#D1011F]"
+              className="h-3.5 w-3.5 rounded border-[#DDD3C7] accent-[#D1011F] focus-visible:ring-2 focus-visible:ring-[#D1011F]"
               {...register("rememberMe")}
             />
             Remember me
           </label>
           <Link
             to="/reset-password"
-            className="text-xs sm:text-sm font-semibold text-[#D1011F] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F]"
+            className="text-xs font-semibold text-[#D1011F] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F]"
           >
             Forgot password?
           </Link>
         </div>
 
         {formMessage && (
-          <p className="text-xs sm:text-sm leading-5 text-[#D1011F]" role="status">
+          <p className="text-xs leading-4 text-[#D1011F]" role="status">
             {formMessage}
           </p>
         )}
@@ -112,7 +112,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-xl bg-[#D1011F] px-4 py-2.5 sm:py-3 text-sm font-bold text-white transition hover:bg-[#B9001B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 shadow-sm"
+          className="w-full rounded-xl bg-[#D1011F] px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-white transition hover:bg-[#B9001B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 shadow-sm"
         >
           {isSubmitting ? "Logging in..." : "Log In"}
         </button>
@@ -120,7 +120,7 @@ export default function Login() {
         <button
           type="button"
           onClick={handleGuestLogin}
-          className="w-full rounded-xl border border-[#DDD3C7] px-4 py-2.5 sm:py-3 text-sm font-bold text-[#24211d] transition hover:bg-[#fffaf2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2"
+          className="w-full rounded-xl border border-[#DDD3C7] px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-[#24211d] transition hover:bg-[#fffaf2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2"
         >
           Continue as Guest
         </button>
@@ -128,7 +128,7 @@ export default function Login() {
 
       <SocialLogin compact />
 
-      <p className="mt-3.5 sm:mt-4 text-center text-xs sm:text-sm text-[#5F584F]">
+      <p className="mt-2.5 text-center text-xs text-[#5F584F]">
         Don&apos;t have an account?{" "}
         <Link
           to="/signup"

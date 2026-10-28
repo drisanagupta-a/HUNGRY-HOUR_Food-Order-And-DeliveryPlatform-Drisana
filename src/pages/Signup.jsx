@@ -54,7 +54,7 @@ export default function Signup() {
   return (
     <AuthLayout eyebrow="Welcome" title="Sign up">
       <form
-        className="space-y-4"
+        className="space-y-1.5 sm:space-y-2"
         onSubmit={handleSubmit(handleSignup, () => setFormMessage(""))}
         noValidate
       >
@@ -65,6 +65,7 @@ export default function Signup() {
           placeholder="Your name"
           register={register("fullName")}
           error={errors.fullName?.message}
+          compact
         />
 
         <FormField
@@ -75,6 +76,7 @@ export default function Signup() {
           placeholder="you@example.com"
           register={register("email")}
           error={errors.email?.message}
+          compact
         />
 
         <FormField
@@ -85,6 +87,7 @@ export default function Signup() {
           placeholder="At least 8 characters"
           register={register("password")}
           error={errors.password?.message}
+          compact
           trailingContent={
             <button
               type="button"
@@ -94,14 +97,14 @@ export default function Signup() {
               className="rounded-md p-1 text-[#746C61] hover:text-[#000000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F]"
             >
               {showPassword ? (
-                <EyeOff aria-hidden="true" size={18} />
+                <EyeOff aria-hidden="true" size={16} />
               ) : (
-                <Eye aria-hidden="true" size={18} />
+                <Eye aria-hidden="true" size={16} />
               )}
             </button>
           }
         />
-        <p className="-mt-2 text-xs text-[#746C61]">
+        <p className="-mt-1 text-[11px] text-[#746C61]">
           Use 8 to 128 characters.
         </p>
 
@@ -113,6 +116,7 @@ export default function Signup() {
           placeholder="Enter your password again"
           register={register("confirmPassword")}
           error={errors.confirmPassword?.message}
+          compact
           trailingContent={
             <button
               type="button"
@@ -126,23 +130,23 @@ export default function Signup() {
               className="rounded-md p-1 text-[#746C61] hover:text-[#000000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F]"
             >
               {showConfirmPassword ? (
-                <EyeOff aria-hidden="true" size={18} />
+                <EyeOff aria-hidden="true" size={16} />
               ) : (
-                <Eye aria-hidden="true" size={18} />
+                <Eye aria-hidden="true" size={16} />
               )}
             </button>
           }
         />
 
-        <div>
-          <label className="flex items-start gap-2 text-sm leading-5 text-[#5F584F]">
+        <div className="pt-0.5">
+          <label className="flex items-start gap-1.5 text-xs leading-4 text-[#5F584F] cursor-pointer">
             <input
               type="checkbox"
               aria-invalid={Boolean(errors.acceptTerms)}
               aria-describedby={
                 errors.acceptTerms ? "signup-terms-error" : undefined
               }
-              className="mt-0.5 h-4 w-4 rounded border-[#DDD3C7] accent-[#D1011F] focus-visible:ring-2 focus-visible:ring-[#D1011F]"
+              className="mt-0.5 h-3.5 w-3.5 rounded border-[#DDD3C7] accent-[#D1011F] focus-visible:ring-2 focus-visible:ring-[#D1011F]"
               {...register("acceptTerms")}
             />
             <span>I agree to the terms and conditions.</span>
@@ -150,7 +154,7 @@ export default function Signup() {
           {errors.acceptTerms?.message && (
             <p
               id="signup-terms-error"
-              className="mt-2 text-sm text-[#D1011F]"
+              className="mt-1 text-xs text-[#D1011F]"
               role="alert"
             >
               {errors.acceptTerms.message}
@@ -159,7 +163,7 @@ export default function Signup() {
         </div>
 
         {formMessage && (
-          <p className="text-sm leading-6 text-[#746C61]" role="status">
+          <p className="text-xs leading-4 text-[#D1011F]" role="status">
             {formMessage}
           </p>
         )}
@@ -167,21 +171,21 @@ export default function Signup() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-xl bg-[#D1011F] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#B9001B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-xl bg-[#D1011F] px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-white transition hover:bg-[#B9001B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 shadow-sm"
         >
           {isSubmitting ? "Creating account..." : "Sign Up"}
         </button>
       </form>
 
-      <SocialLogin />
+      <SocialLogin compact />
 
-      <p className="mt-6 text-center text-sm text-[#5F584F]">
+      <p className="mt-2 text-center text-xs text-[#5F584F]">
         Already have an account?{" "}
         <Link
           to="/login"
           className="font-bold text-[#D1011F] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F]"
         >
-          Sign in
+          Log in
         </Link>
       </p>
     </AuthLayout>
