@@ -12,10 +12,22 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, logOut } from "../../services/authService.js";
+import { fetchCustomerAddresses } from "../../services/orderService.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useCart } from "../../context/CartContext.jsx";
 import SearchBar from "./SearchBar.jsx";
 import hungryHourLogo from "../../assets/Group 9.svg";
+
+// Module-level cache to prevent duplicate API requests across Navbar mounts and re-renders
+let cachedHomeAddress = null;
+let cachedUserId = null;
+let addressFetchPromise = null;
+
+export function clearAddressCache() {
+  cachedHomeAddress = null;
+  cachedUserId = null;
+  addressFetchPromise = null;
+}
 
 export default function Navbar({
   searchText,
@@ -38,6 +50,84 @@ export default function Navbar({
   const [logoutError, setLogoutError] = useState("");
   const navigate = useNavigate();
   const accountMenuRef = useRef(null);
+
+  // Address state for authenticated customer's Home address
+  const [homeAddress, setHomeAddress] = useState(() => {
+    if (user && cachedUserId === (user.id || user.email)) {
+      return cachedHomeAddress;
+    }
+    return null;
+  });
+  const [addressLoading, setAddressLoading] = useState(() => {
+    return Boolean(user && cachedUserId !== (user.id || user.email));
+  });
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    if (!user) {
+      setHomeAddress(null);
+      setAddressLoading(false);
+      return;
+    }
+
+    const currentUserId = user.id || user.email || "current-user";
+
+    // Use cached address if already resolved for this user
+    if (cachedUserId === currentUserId && cachedHomeAddress !== null) {
+      setHomeAddress(cachedHomeAddress);
+      setAddressLoading(false);
+      return;
+    }
+
+    // Reuse existing in-flight promise or start a new fetch
+    if (!addressFetchPromise || cachedUserId !== currentUserId) {
+      cachedUserId = currentUserId;
+      addressFetchPromise = fetchCustomerAddresses()
+        .then((addresses) => {
+          // Identify the address with label 'Home' (case-insensitive)
+          const homeAddr = Array.isArray(addresses)
+            ? addresses.find((addr) => {
+                if (!addr) return false;
+                const label =
+                  typeof addr.label === "string"
+                    ? addr.label.trim().toLowerCase()
+                    : "";
+                return label === "home";
+              })
+            : null;
+
+          const resolved =
+            homeAddr?.fullAddress ||
+            homeAddr?.address ||
+            homeAddr?.streetAddress ||
+            "";
+
+          cachedHomeAddress = resolved;
+          return resolved;
+        })
+        .catch((err) => {
+          console.warn("Could not retrieve customer addresses for navbar:", err);
+          cachedHomeAddress = ""; // Empty string denotes fetch attempted but no Home address
+          return "";
+        })
+        .finally(() => {
+          addressFetchPromise = null;
+        });
+    }
+
+    setAddressLoading(true);
+    addressFetchPromise.then((addr) => {
+      if (isCurrent) {
+        setHomeAddress(addr);
+        setAddressLoading(false);
+      }
+    });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [user]);
 
   // Close account dropdown on outside click or escape key
   useEffect(() => {
@@ -92,6 +182,7 @@ export default function Navbar({
         );
       }
     } finally {
+      clearAddressCache();
       clearProfile();
       navigate("/login", { replace: true });
       setIsLoggingOut(false);
@@ -133,15 +224,39 @@ export default function Navbar({
           </Link>
 
           {/* Delivery Location with Location Icon */}
-          <div className="header-location-pill" title="Current delivery location">
+          <Link
+            to={user ? "/profile" : "/login"}
+            className="header-location-pill"
+            style={{ textDecoration: "none", color: "inherit" }}
+            title={
+              !user
+                ? `Delivery location: ${deliveryLocation}`
+                : addressLoading
+                ? "Loading saved address..."
+                : homeAddress
+                ? `Deliver to Home: ${homeAddress}`
+                : "No Home address found. Click to add a delivery address."
+            }
+            aria-label={
+              !user
+                ? `Delivery location: ${deliveryLocation}`
+                : homeAddress
+                ? `Deliver to Home: ${homeAddress}`
+                : "Add delivery address"
+            }
+          >
             <MapPin size={16} className="location-pin" aria-hidden="true" />
             <div className="location-info">
               <span className="location-label">Deliver to</span>
               <span className="location-address">
-                {deliveryLocation}
+                {!user
+                  ? deliveryLocation
+                  : addressLoading
+                  ? "Loading..."
+                  : homeAddress || "Add delivery address"}
               </span>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Center: Restaurant and food search bar */}
