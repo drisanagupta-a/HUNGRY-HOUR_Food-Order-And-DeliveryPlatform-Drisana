@@ -1,6 +1,7 @@
 HUNGRY HOUR — Food Ordering & Delivery Platform
 
-HUNGRY HOUR is a food ordering and delivery platform designed to help users discover restaurants, explore menus, and order food through a responsive web interface. The project integrates a React frontend with a Spring Boot backend, Supabase authentication, and a planned ML-based food recommendation feature.
+HUNGRY HOUR is a food ordering and delivery platform designed to help users discover restaurants, explore menus, and order food through a responsive web interface. The project integrates a React frontend with a Spring Boot backend, Supabase authentication, and a planned ML-based food recommendation feature.   
+deployed link https://hungry-hour-food-order-and-delivery.vercel.app/
 
 ### Intro splash and backend availability check
 
