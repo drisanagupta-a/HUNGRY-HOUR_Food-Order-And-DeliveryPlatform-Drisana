@@ -284,7 +284,13 @@ export default function RestaurantDetails({
                           <MenuItem
                             key={dish.id || `${dish.name}-${dish.category}`}
                             dish={dish}
-                            onAddToCart={onAddToCart}
+                            onAddToCart={(item) =>
+                              onAddToCart?.({
+                                ...item,
+                                restaurantId: item.restaurantId || restaurant?.id || restaurantId,
+                                restaurantName: item.restaurantName || restaurant?.name || "",
+                              })
+                            }
                           />
                         ))}
                       </div>

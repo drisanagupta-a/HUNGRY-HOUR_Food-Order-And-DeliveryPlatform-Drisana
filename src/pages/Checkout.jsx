@@ -6,12 +6,16 @@ import {
   CheckCircle2,
   CreditCard,
   MapPin,
+  Minus,
+  Plus,
   ShoppingBag,
+  Trash2,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/common/Navbar.jsx";
 import Footer from "../components/common/Footer.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useCart } from "../context/CartContext.jsx";
 import {
   createCustomerAddress,
   createPaymentOrder,
@@ -140,6 +144,10 @@ function validateDeliveryAddress(address) {
 export default function Checkout({ cartItems = [], onClearCart }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const cart = useCart();
+  const activeCartItems = cart.cartItems?.length ? cart.cartItems : cartItems;
+  const { incrementQuantity, decrementQuantity, removeFromCart, clearCart } = cart;
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [customerNote, setCustomerNote] = useState("");
@@ -185,12 +193,12 @@ export default function Checkout({ cartItems = [], onClearCart }) {
     };
   }, []);
 
-  const cartSubtotal = cartItems.reduce(
+  const cartSubtotal = activeCartItems.reduce(
     (total, item) => total + (item.price || 0) * (item.quantity || 1),
     0,
   );
 
-  const restaurantId = cartItems[0]?.restaurantId;
+  const restaurantId = activeCartItems[0]?.restaurantId;
 
   function validateInputs() {
     let isValid = true;
@@ -241,7 +249,7 @@ export default function Checkout({ cartItems = [], onClearCart }) {
 
     setSubmitError("");
 
-    if (cartItems.length === 0) {
+    if (activeCartItems.length === 0) {
       setSubmitError("Your bag is empty. Please add dishes before checking out.");
       return;
     }
@@ -286,10 +294,11 @@ export default function Checkout({ cartItems = [], onClearCart }) {
           restaurantId,
           deliveryAddress: deliveryAddress.trim(),
           customerNote: customerNote.trim(),
-          items: cartItems,
+          items: activeCartItems,
           paymentMethod: "CASH_ON_DELIVERY",
         });
 
+        clearCart();
         if (onClearCart) {
           onClearCart();
         }
@@ -312,7 +321,7 @@ export default function Checkout({ cartItems = [], onClearCart }) {
             restaurantId,
             deliveryAddress: deliveryAddress.trim(),
             customerNote: customerNote.trim(),
-            items: cartItems,
+            items: activeCartItems,
             paymentMethod: "RAZORPAY",
           });
           setPendingOnlineOrder(onlineOrder);
@@ -370,6 +379,7 @@ export default function Checkout({ cartItems = [], onClearCart }) {
               });
 
               // Clear the cart ONLY after the backend confirms payment verification
+              clearCart();
               if (onClearCart) {
                 onClearCart();
               }
@@ -434,7 +444,7 @@ export default function Checkout({ cartItems = [], onClearCart }) {
     <div className="food-home checkout-page">
       <Navbar
         favoriteCount={0}
-        cartItems={orderSuccess ? [] : cartItems}
+        cartItems={orderSuccess ? [] : activeCartItems}
         homePath="/home"
         showSearch={false}
         showFavorites={false}
@@ -495,7 +505,7 @@ export default function Checkout({ cartItems = [], onClearCart }) {
               </Link>
             </div>
           </div>
-        ) : cartItems.length === 0 ? (
+        ) : activeCartItems.length === 0 ? (
           <div className="bg-[#fffefa] border border-[#eee6dc] rounded-2xl p-12 text-center shadow-sm">
             <ShoppingBag
               size={48}
@@ -794,24 +804,86 @@ export default function Checkout({ cartItems = [], onClearCart }) {
 
             <div className="md:col-span-1">
               <div className="bg-[#fffefa] border border-[#eee6dc] rounded-2xl p-6 shadow-sm sticky top-6">
-                <h2 className="text-lg font-serif font-bold text-[#24211d] mb-4">
-                  Order Summary
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-serif font-bold text-[#24211d]">
+                    Order Summary
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to="/cart"
+                      className="text-xs font-semibold text-[#c92332] hover:underline"
+                    >
+                      Edit in Cart
+                    </Link>
+                    {!pendingOnlineOrder && !isSubmitting && activeCartItems.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowClearConfirm(true)}
+                        className="text-[11px] font-semibold text-[#746C61] hover:text-[#c92332] transition"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
 
                 <ul className="divide-y divide-[#eee4d6] text-sm">
-                  {cartItems.map((item) => (
-                    <li key={item.id} className="py-2.5 flex justify-between gap-2">
-                      <div>
-                        <p className="font-semibold text-[#24211d]">
+                  {activeCartItems.map((item) => (
+                    <li key={item.id} className="py-3 flex items-center justify-between gap-2">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <p className="font-semibold text-[#24211d] truncate">
                           {item.name}
                         </p>
                         <p className="text-xs text-[#746C61]">
-                          Qty: {item.quantity || 1}
+                          ₹{item.price} each
                         </p>
                       </div>
-                      <span className="font-semibold text-[#24211d]">
-                        ₹{(item.price || 0) * (item.quantity || 1)}
-                      </span>
+
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        {!pendingOnlineOrder && !isSubmitting ? (
+                          <div className="flex items-center gap-1.5 border border-[#eee4d6] bg-[#fffefa] rounded-full px-2 py-0.5 shadow-sm">
+                            <button
+                              type="button"
+                              onClick={() => decrementQuantity(item.id)}
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[#5F584F] hover:bg-[#f3eae0] hover:text-[#24211d] transition"
+                              aria-label={`Decrease ${item.name}`}
+                            >
+                              <Minus size={11} />
+                            </button>
+                            <span className="w-4 text-center text-xs font-bold text-[#24211d]">
+                              {item.quantity || 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => incrementQuantity(item.id)}
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[#5F584F] hover:bg-[#f3eae0] hover:text-[#24211d] transition"
+                              aria-label={`Increase ${item.name}`}
+                            >
+                              <Plus size={11} />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs font-semibold text-[#746C61]">
+                            Qty: {item.quantity || 1}
+                          </span>
+                        )}
+
+                        <span className="font-bold text-[#24211d] min-w-[50px] text-right">
+                          ₹{(item.price || 0) * (item.quantity || 1)}
+                        </span>
+
+                        {!pendingOnlineOrder && !isSubmitting && (
+                          <button
+                            type="button"
+                            onClick={() => removeFromCart(item.id)}
+                            className="p-1 text-[#746C61] hover:text-[#c92332] rounded transition"
+                            aria-label={`Remove ${item.name}`}
+                            title="Remove"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -827,6 +899,49 @@ export default function Checkout({ cartItems = [], onClearCart }) {
           </div>
         )}
       </main>
+
+      {/* Clear Cart Confirmation Dialog */}
+      {showClearConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="checkout-clear-title"
+        >
+          <div className="w-full max-w-sm rounded-2xl border border-[#eee4d6] bg-[#fffefa] p-6 shadow-2xl">
+            <h2
+              id="checkout-clear-title"
+              className="font-serif text-lg font-bold text-[#24211d]"
+            >
+              Clear your food bag?
+            </h2>
+            <p className="mt-2 text-sm text-[#5F584F]">
+              Are you sure you want to remove all dishes from your bag?
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowClearConfirm(false)}
+                className="rounded-xl border border-[#ddd3c7] bg-white px-4 py-2 text-xs font-semibold text-[#5F584F] hover:bg-[#fffaf2]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  clearCart();
+                  if (onClearCart) onClearCart();
+                  setPendingOnlineOrder(null);
+                  setShowClearConfirm(false);
+                }}
+                className="rounded-xl bg-[#c92332] px-4 py-2 text-xs font-bold text-white hover:bg-[#a81725]"
+              >
+                Yes, Clear Bag
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

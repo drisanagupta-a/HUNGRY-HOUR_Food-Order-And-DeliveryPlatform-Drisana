@@ -13,6 +13,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, logOut } from "../../services/authService.js";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { useCart } from "../../context/CartContext.jsx";
 import SearchBar from "./SearchBar.jsx";
 import hungryHourLogo from "../../assets/Group 9.svg";
 
@@ -66,9 +67,11 @@ export default function Navbar({
     };
   }, [accountMenuOpen]);
 
-  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
-  const cartSubtotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+  const cartContext = useCart();
+  const effectiveCartItems = cartItems?.length ? cartItems : (cartContext?.cartItems || []);
+  const cartCount = effectiveCartItems.reduce((total, item) => total + (item.quantity || 1), 0);
+  const cartSubtotal = effectiveCartItems.reduce(
+    (total, item) => total + (item.price || 0) * (item.quantity || 1),
     0,
   );
 
@@ -203,22 +206,22 @@ export default function Navbar({
                     <X size={18} />
                   </button>
                 </div>
-                {cartItems.length === 0 ? (
+                {effectiveCartItems.length === 0 ? (
                   <p className="cart-empty">
                     Your bag is empty. Add a dish that makes you smile.
                   </p>
                 ) : (
                   <>
                     <ul className="cart-item-list">
-                      {cartItems.map((item) => (
+                      {effectiveCartItems.map((item) => (
                         <li className="cart-item" key={item.id}>
                           <span>
                             <b>{item.name}</b>
                             <small>
-                              {item.quantity} × ₹{item.price}
+                              {item.quantity || 1} × ₹{item.price}
                             </small>
                           </span>
-                          <b>₹{item.price * item.quantity}</b>
+                          <b>₹{(item.price || 0) * (item.quantity || 1)}</b>
                         </li>
                       ))}
                     </ul>
@@ -232,6 +235,9 @@ export default function Navbar({
                         marginTop: "12px",
                         paddingTop: "12px",
                         borderTop: "1px solid #eee4d6",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
                       }}
                     >
                       <Link
@@ -252,10 +258,29 @@ export default function Navbar({
                       >
                         Checkout • ₹{cartSubtotal}
                       </Link>
+                      <Link
+                        to="/cart"
+                        onClick={() => setCartIsOpen(false)}
+                        className="block w-full text-center rounded-full border border-[#eee4d6] bg-white py-2 text-xs font-bold text-[#5F584F] transition hover:bg-[#fffaf2]"
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          textAlign: "center",
+                          borderRadius: "9px",
+                          border: "1px solid #eee4d6",
+                          background: "#ffffff",
+                          padding: "8px 14px",
+                          color: "#5F584F",
+                          fontWeight: "700",
+                          textDecoration: "none",
+                        }}
+                      >
+                        View Full Bag
+                      </Link>
                     </div>
                   </>
                 )}
-                {cartItems.length === 0 && (
+                {effectiveCartItems.length === 0 && (
                   <p className="cart-note">
                     Add dishes from any restaurant to start your order.
                   </p>

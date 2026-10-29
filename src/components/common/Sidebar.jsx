@@ -109,9 +109,11 @@ export default function Sidebar({
       id: "cart",
       label: "Cart",
       icon: ShoppingBag,
-      href: "/checkout",
+      href: isPreview ? "/dev-dashboard-preview/cart" : "/cart",
       badge: cartCount > 0 ? cartCount : null,
-      active: location.pathname === "/checkout",
+      active:
+        location.pathname === "/cart" ||
+        location.pathname === "/dev-dashboard-preview/cart",
       onClick: () => {
         if (onCartClick) {
           onCartClick();

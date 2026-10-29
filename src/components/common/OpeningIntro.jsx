@@ -1,55 +1,82 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function OpeningIntro({ onComplete }) {
-  const [visible, setVisible] = useState(true);
-  const [revealed, setRevealed] = useState(false);
+  const location = useLocation();
+
+  // Determine if Craving entrance should play:
+  // After login/signup (pending flag or route state) or on initial session entry to dashboard
+  const [isActive, setIsActive] = useState(() => {
+    try {
+      const isPending =
+        sessionStorage.getItem("hh_craving_intro_pending") === "1" ||
+        Boolean(location.state?.cravingIntro);
+      const alreadyShown =
+        sessionStorage.getItem("hh_opening_intro_shown") === "1";
+
+      return isPending || !alreadyShown;
+    } catch {
+      return true;
+    }
+  });
+
+  const [fadingOut, setFadingOut] = useState(false);
 
   useEffect(() => {
-    // Show once per browser session
-    const alreadyShown = sessionStorage.getItem("hh_opening_intro_shown");
-    if (alreadyShown === "1") {
-      setVisible(false);
-      onComplete?.();
-      return;
+    if (!isActive) return;
+
+    // Mark as shown so ordinary in-dashboard re-renders don't replay it
+    try {
+      sessionStorage.setItem("hh_opening_intro_shown", "1");
+    } catch {
+      // storage unavailable
     }
 
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const timer = window.setTimeout(() => {
-      setRevealed(true);
-    }, reducedMotion ? 50 : 80);
+    if (reducedMotion) {
+      try {
+        sessionStorage.removeItem("hh_craving_intro_pending");
+      } catch {}
+      const timer = window.setTimeout(() => {
+        setIsActive(false);
+        onComplete?.();
+      }, 200);
+      return () => window.clearTimeout(timer);
+    }
 
-    const hideTimer = window.setTimeout(() => {
-      sessionStorage.setItem("hh_opening_intro_shown", "1");
-      setVisible(false);
+    // Step 1: Upward rise runs over 500ms.
+    // Step 2: At 480ms, begin soft dissolve fade-out.
+    const fadeTimer = window.setTimeout(() => {
+      setFadingOut(true);
+    }, 480);
+
+    // Step 3: Complete transition and remove at 660ms (within 500–700ms range)
+    const completeTimer = window.setTimeout(() => {
+      try {
+        sessionStorage.removeItem("hh_craving_intro_pending");
+      } catch {}
+      setIsActive(false);
       onComplete?.();
-    }, reducedMotion ? 600 : 1500);
+    }, 660);
 
     return () => {
-      window.clearTimeout(timer);
-      window.clearTimeout(hideTimer);
+      window.clearTimeout(fadeTimer);
+      window.clearTimeout(completeTimer);
     };
-  }, []);
+  }, [isActive, onComplete]);
 
-  if (!visible) return null;
+  if (!isActive) return null;
 
   return (
-    <div className="opening-intro" aria-hidden="true">
+    <div
+      className={`opening-intro hero-craving-intro ${fadingOut ? "opening-fading-out" : ""}`}
+      aria-hidden="true"
+    >
       <div className="opening-inner">
-        <div className={`opening-word ${revealed ? "opening-revealed" : ""}`}>
-          <span className="opening-letter">C</span>
-          <span className="opening-letter">R</span>
-          <span className="opening-letter">A</span>
-          <span className="opening-letter">V</span>
-          <span className="opening-letter">I</span>
-          <span className="opening-letter">N</span>
-          <span className="opening-letter">G</span>
-          <span className="opening-letter opening-dot">.</span>
-          <span className="opening-letter opening-dot">.</span>
-          <span className="opening-letter opening-dot">.</span>
-        </div>
+        <span className="opening-word">Craving</span>
       </div>
     </div>
   );

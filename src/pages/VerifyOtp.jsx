@@ -41,7 +41,9 @@ export default function VerifyOtp() {
 
     try {
       await getMyProfile();
-      navigate("/home", { replace: true });
+      sessionStorage.setItem("hh_craving_intro_pending", "1");
+      sessionStorage.removeItem("hh_opening_intro_shown");
+      navigate("/home", { state: { cravingIntro: true }, replace: true });
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         setSessionStatus("login-required");

@@ -30,7 +30,9 @@ export default function Login() {
 
     try {
       await logIn(email, password);
-      navigate("/home", { replace: true });
+      sessionStorage.setItem("hh_craving_intro_pending", "1");
+      sessionStorage.removeItem("hh_opening_intro_shown");
+      navigate("/home", { state: { cravingIntro: true }, replace: true });
     } catch (error) {
       setFormMessage(
         error instanceof Error ? error.message : "Unable to log in. Please try again.",
@@ -39,7 +41,9 @@ export default function Login() {
   };
 
   const handleGuestLogin = () => {
-    navigate("/home", { replace: true });
+    sessionStorage.setItem("hh_craving_intro_pending", "1");
+    sessionStorage.removeItem("hh_opening_intro_shown");
+    navigate("/home", { state: { cravingIntro: true }, replace: true });
   };
 
   return (

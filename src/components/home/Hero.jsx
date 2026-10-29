@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import OpeningIntro from "../common/OpeningIntro.jsx";
 import clothSvg from "../../assets/images/cloth.svg";
 import bowlBreadSvg from "../../assets/images/bowlbread.svg";
 import foodPlateImg from "../../assets/Mediterranean Sticker Food Collection 2.png";
@@ -10,6 +11,7 @@ import lemonImg from "../../assets/Layer_1 (4).png";
 export default function Hero() {
   return (
     <section className="figma-hero-section" aria-label="Special Offers">
+      <OpeningIntro />
       <div className="hero-banners-grid">
         {/* Large Yellow Promotional Banner (Left) */}
         <div className="hero-yellow-banner">
