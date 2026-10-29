@@ -15,6 +15,7 @@ import { ApiError, logOut } from "../../services/authService.js";
 import { fetchCustomerAddresses } from "../../services/orderService.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useCart } from "../../context/CartContext.jsx";
+import { useFavorites } from "../../context/FavoritesContext.jsx";
 import SearchBar from "./SearchBar.jsx";
 import hungryHourLogo from "../../assets/Group 9.svg";
 
@@ -32,7 +33,7 @@ export function clearAddressCache() {
 export default function Navbar({
   searchText,
   setSearchText,
-  favoriteCount = 0,
+  favoriteCount,
   cartItems = [],
   onFavoritesClick,
   onToggleSidebar,
@@ -44,6 +45,9 @@ export default function Navbar({
   homePath = "/home",
 }) {
   const { user, clearProfile } = useAuth();
+  const { favoriteCount: contextFavCount } = useFavorites();
+  const effectiveFavoriteCount =
+    typeof favoriteCount === "number" ? favoriteCount : contextFavCount ?? 0;
   const [cartIsOpen, setCartIsOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -278,13 +282,13 @@ export default function Navbar({
             <button
               className="icon-button favorite-nav-button"
               type="button"
-              onClick={onFavoritesClick}
-              aria-label={`Show favorite restaurants (${favoriteCount})`}
+              onClick={onFavoritesClick || (() => navigate("/restaurants"))}
+              aria-label={`Show favorite restaurants (${effectiveFavoriteCount})`}
               title="Favorites"
             >
               <Heart size={20} aria-hidden="true" />
-              {favoriteCount > 0 && (
-                <span className="action-count">{favoriteCount}</span>
+              {effectiveFavoriteCount > 0 && (
+                <span className="action-count">{effectiveFavoriteCount}</span>
               )}
             </button>
           )}

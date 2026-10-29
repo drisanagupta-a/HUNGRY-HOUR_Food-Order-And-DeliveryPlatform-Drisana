@@ -1,46 +1,40 @@
 import { useEffect, useState } from "react";
+import { AlertCircle, UtensilsCrossed } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import Navbar from "../components/common/Navbar.jsx";
 import Sidebar from "../components/common/Sidebar.jsx";
 import Footer from "../components/common/Footer.jsx";
 import CategorySection from "../components/home/CategorySection.jsx";
 import RestaurantCard from "../components/restaurant/RestaurantCard.jsx";
-import { foodCategories, mockRestaurants } from "../data/mockRestaurants.js";
+import RestaurantFilters from "../components/restaurant/RestaurantFilters.jsx";
+import { useFavorites } from "../context/FavoritesContext.jsx";
+import { useDebounce } from "../hooks/useDebounce.js";
 import {
   adaptRestaurant,
   extractArray,
+  extractCuisines,
+  fetchFavoriteRestaurants,
   fetchRestaurants,
 } from "../services/restaurantService.js";
 import "../App.css";
+
+const FOOD_CATEGORIES = [
+  { name: "All", icon: "✦" },
+  { name: "Burgers", icon: "🍔" },
+  { name: "Pizza", icon: "🍕" },
+  { name: "Noodles", icon: "🍜" },
+  { name: "Snacks", icon: "🍟" },
+  { name: "Drinks", icon: "🥤" },
+  { name: "Indian", icon: "🍛" },
+  { name: "Desserts", icon: "🍰" },
+];
 
 const sortOptions = [
   { value: "recommended", label: "Recommended" },
   { value: "rating-desc", label: "Rating: High to Low" },
   { value: "delivery-asc", label: "Delivery Time: Fastest First" },
+  { value: "name-asc", label: "Name: A to Z" },
 ];
-
-function normalizeSearchText(value) {
-  return value.trim().replace(/\s+/g, " ").toLowerCase();
-}
-
-function includesSearchTerm(values, search) {
-  if (!Array.isArray(values)) {
-    return (
-      typeof values === "string" && normalizeSearchText(values).includes(search)
-    );
-  }
-  return values.some(
-    (value) =>
-      typeof value === "string" && normalizeSearchText(value).includes(search),
-  );
-}
-
-function parseDeliveryMinutes(value) {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-  const minutes = value.match(/\d+/);
-  return minutes ? Number(minutes[0]) : undefined;
-}
 
 export default function Restaurants({
   cartItems = [],
@@ -48,33 +42,71 @@ export default function Restaurants({
   isDevelopmentPreview = false,
 }) {
   const previewEnabled = import.meta.env.DEV && isDevelopmentPreview;
-  const [searchText, setSearchText] = useState("");
+
+  const [searchParams] = useSearchParams();
+  const initialSearchQuery = searchParams.get("q") || "";
+
+  // Filter state
+  const [searchText, setSearchText] = useState(initialSearchQuery);
+  const [openNow, setOpenNow] = useState(false);
+  const [selectedCuisine, setSelectedCuisine] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("recommended");
-  const [favorites, setFavorites] = useState([]);
+  const { favorites, toggleFavorite, favoriteCount } = useFavorites();
   const [showFavorites, setShowFavorites] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // Sync search input if URL search query changes
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q !== null && q !== searchText) {
+      setSearchText(q);
+    }
+  }, [searchParams]);
+
+  // Debounce search input by 350ms to avoid sending an API request on every keystroke
+  const debouncedSearchText = useDebounce(searchText, 350);
+
   // Live backend restaurants state
   const [backendRestaurants, setBackendRestaurants] = useState([]);
+  const [discoveredCuisines, setDiscoveredCuisines] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState("");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const search = normalizeSearchText(searchText);
-
+  // Fetch restaurants via backend API using supported parameters only
+  // All search, filtering, and favorites are handled by the backend
   useEffect(() => {
     let isCurrent = true;
     setIsLoading(true);
     setApiError("");
 
-    fetchRestaurants({ q: searchText.trim() || undefined })
+    // If showFavorites is active, use the dedicated backend endpoint GET /api/customer/restaurants/favourites
+    // Otherwise, call GET /api/customer/restaurants with the exact parameters supported by the API (q, open)
+    const fetchPromise = showFavorites
+      ? fetchFavoriteRestaurants({ limit: 50 })
+      : fetchRestaurants({
+          q: debouncedSearchText.trim() || undefined,
+          open: openNow ? true : undefined,
+        });
+
+    fetchPromise
       .then((data) => {
         if (!isCurrent) return;
         const list = extractArray(data);
-        if (list.length > 0) {
-          setBackendRestaurants(list.map(adaptRestaurant).filter(Boolean));
-        } else {
-          setBackendRestaurants([]);
+        const adapted = list.map(adaptRestaurant).filter(Boolean);
+
+        // The frontend directly renders the restaurant list returned by the API
+        // without applying client-side filtering or sorting
+        setBackendRestaurants(adapted);
+
+        // Accumulate cuisines discovered from backend data to populate the cuisine selector
+        if (adapted.length > 0) {
+          const newCuisines = extractCuisines(adapted);
+          setDiscoveredCuisines((prev) => {
+            const merged = new Set([...prev, ...newCuisines]);
+            return Array.from(merged).sort((a, b) => a.localeCompare(b));
+          });
         }
       })
       .catch((error) => {
@@ -84,6 +116,7 @@ export default function Restaurants({
             ? error.message
             : "Could not retrieve live restaurants from backend.",
         );
+        setBackendRestaurants([]);
       })
       .finally(() => {
         if (isCurrent) {
@@ -94,116 +127,29 @@ export default function Restaurants({
     return () => {
       isCurrent = false;
     };
-  }, [searchText]);
+  }, [debouncedSearchText, openNow, showFavorites, refreshTrigger]);
 
-  const hasBackendRestaurants = backendRestaurants.length > 0;
-  const activeRestaurants = hasBackendRestaurants
-    ? backendRestaurants
-    : mockRestaurants;
-
-  // Filter restaurants by category, favorites, and search text
-  const filteredRestaurants = activeRestaurants.filter((restaurant) => {
-    // 1. Favorite filter
-    if (showFavorites && !favorites.includes(restaurant.id)) {
-      return false;
-    }
-
-    // 2. Category filter
-    let matchesCategory = selectedCategory === "All";
-    if (!matchesCategory) {
-      if (selectedCategory === "Noodles") {
-        matchesCategory =
-          (restaurant.categories &&
-            (restaurant.categories.includes("Noodles") ||
-              restaurant.categories.includes("Chinese"))) ||
-          (restaurant.cuisine &&
-            (normalizeSearchText(restaurant.cuisine).includes("noodle") ||
-              normalizeSearchText(restaurant.cuisine).includes("chinese") ||
-              normalizeSearchText(restaurant.cuisine).includes("asian")));
-      } else if (selectedCategory === "Drinks") {
-        matchesCategory =
-          (restaurant.categories &&
-            (restaurant.categories.includes("Drinks") ||
-              restaurant.categories.includes("Beverages"))) ||
-          (restaurant.cuisine &&
-            (normalizeSearchText(restaurant.cuisine).includes("beverage") ||
-              normalizeSearchText(restaurant.cuisine).includes("drink") ||
-              normalizeSearchText(restaurant.cuisine).includes("juice")));
-      } else {
-        matchesCategory =
-          (restaurant.categories &&
-            restaurant.categories.some((cat) =>
-              normalizeSearchText(cat).includes(
-                normalizeSearchText(selectedCategory),
-              ),
-            )) ||
-          (restaurant.cuisine &&
-            normalizeSearchText(restaurant.cuisine).includes(
-              normalizeSearchText(selectedCategory),
-            ));
-      }
-    }
-
-    // 3. Search filter
-    const matchesSearch =
-      !search ||
-      includesSearchTerm(
-        [restaurant.name, restaurant.cuisine, ...(restaurant.categories ?? [])],
-        search,
-      );
-
-    return matchesCategory && matchesSearch;
-  });
-
-  // Sort restaurants
-  const restaurantSorters = {
-    "rating-desc": (restaurant) =>
-      restaurant.rating !== undefined
-        ? Number.parseFloat(restaurant.rating)
-        : 0,
-    "delivery-asc": (restaurant) =>
-      restaurant.time !== undefined
-        ? parseDeliveryMinutes(restaurant.time)
-        : 9999,
-  };
-
-  const sortedRestaurants =
-    sortBy === "rating-desc"
-      ? [...filteredRestaurants].sort(
-          (a, b) =>
-            (restaurantSorters["rating-desc"](b) || 0) -
-            (restaurantSorters["rating-desc"](a) || 0),
-        )
-      : sortBy === "delivery-asc"
-      ? [...filteredRestaurants].sort(
-          (a, b) =>
-            (restaurantSorters["delivery-asc"](a) || 9999) -
-            (restaurantSorters["delivery-asc"](b) || 9999),
-        )
-      : filteredRestaurants;
-
-  function toggleFavorite(restaurantId) {
-    setFavorites((currentFavorites) =>
-      currentFavorites.includes(restaurantId)
-        ? currentFavorites.filter((id) => id !== restaurantId)
-        : [...currentFavorites, restaurantId],
-    );
-  }
-
-  function clearFilters() {
+  // Clear all filters: resets all filter states
+  function clearAllFilters() {
     setSearchText("");
+    setOpenNow(false);
+    setSelectedCuisine("All");
     setSelectedCategory("All");
     setSortBy("recommended");
     setShowFavorites(false);
   }
 
+  function handleRetry() {
+    setRefreshTrigger((prev) => prev + 1);
+  }
+
   return (
     <div className="food-home" id="top">
-      {/* 1. Top Navbar */}
+      {/* 1. Top Navbar (Synced with search and favorites) */}
       <Navbar
         searchText={searchText}
         setSearchText={setSearchText}
-        favoriteCount={favorites.length}
+        favoriteCount={favoriteCount}
         cartItems={cartItems}
         homePath={previewEnabled ? "/dev-dashboard-preview" : "/home"}
         showLogout={!previewEnabled}
@@ -223,15 +169,10 @@ export default function Restaurants({
 
         <main className="dashboard-main-content">
           {/* Header Section */}
-          <div className="restaurants-page-header">
+          <div className="restaurants-page-header mb-4">
             <div className="flex items-center gap-2 mb-1">
               <span className="section-kicker">DISCOVER FOOD</span>
-              {!hasBackendRestaurants && (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f3eae0] text-[#746C61] border border-[#e4d6c5]">
-                  Sample Catalog Fallback
-                </span>
-              )}
-              {hasBackendRestaurants && !isLoading && (
+              {!isLoading && !apiError && (
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                   Live Backend
                 </span>
@@ -245,89 +186,95 @@ export default function Restaurants({
                 ? "Here are the kitchens you’ve saved as your personal favorites."
                 : "Explore top kitchens, verified chefs, and delicious cuisines near you."}
             </p>
-            {apiError && !hasBackendRestaurants && (
-              <p className="text-xs text-[#746C61] mt-2">
-                Backend notice: {apiError}. Showing sample restaurants.
-              </p>
-            )}
           </div>
 
           {/* Food Category Icons */}
           <CategorySection
-            categories={foodCategories}
+            categories={FOOD_CATEGORIES}
             selectedCategory={selectedCategory}
             onSelectCategory={(category) => {
-              setSelectedCategory(category);
-              setShowFavorites(false);
+              setSelectedCategory((current) =>
+                current === category ? "All" : category,
+              );
             }}
           />
 
-          {/* Results Toolbar / Sort */}
-          <div
-            className="results-toolbar"
-            style={{ marginTop: "0", marginBottom: "28px" }}
-          >
-            <div className="results-counts" aria-live="polite">
-              <strong>{sortedRestaurants.length}</strong>{" "}
-              {sortedRestaurants.length === 1 ? "restaurant" : "restaurants"}{" "}
-              available
-              {selectedCategory !== "All" && (
-                <>
-                  <span aria-hidden="true">·</span>
-                  <span>
-                    Category: <strong>{selectedCategory}</strong>
-                  </span>
-                </>
-              )}
-              {showFavorites && (
-                <>
-                  <span aria-hidden="true">·</span>
-                  <span className="text-[#D90429] font-bold">
-                    Favorites Only
-                  </span>
-                </>
-              )}
-            </div>
+          {/* Functional Restaurant Search & Filters */}
+          <RestaurantFilters
+            searchText={searchText}
+            onSearchChange={setSearchText}
+            onClearSearch={() => setSearchText("")}
+            selectedCuisine={selectedCuisine}
+            onCuisineChange={setSelectedCuisine}
+            onClearCuisine={() => setSelectedCuisine("All")}
+            availableCuisines={discoveredCuisines}
+            openNow={openNow}
+            onOpenNowChange={setOpenNow}
+            onClearOpenNow={() => setOpenNow(false)}
+            selectedCategory={selectedCategory}
+            onClearCategory={() => setSelectedCategory("All")}
+            showFavorites={showFavorites}
+            onClearFavorites={() => setShowFavorites(false)}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            sortOptions={sortOptions}
+            onClearFilters={clearAllFilters}
+            totalCount={backendRestaurants.length}
+            isLoading={isLoading}
+          />
 
-            <div className="flex items-center gap-4">
-              {(selectedCategory !== "All" || searchText || showFavorites) && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="text-xs text-[#D90429] hover:underline font-semibold"
-                >
-                  Clear filters
-                </button>
-              )}
-              <label className="sort-control">
-                <span>Sort by</span>
-                <select
-                  value={sortBy}
-                  onChange={(event) => setSortBy(event.target.value)}
-                >
-                  {sortOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </div>
-
-          {/* Restaurant Cards Grid */}
+          {/* State 1: Loading State */}
           {isLoading ? (
-            <div className="empty-results" role="status">
+            <div className="empty-results" role="status" aria-live="polite">
               <span
-                className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-[#D90429]/20 border-t-[#D90429] mb-3"
+                className="inline-block h-7 w-7 animate-spin rounded-full border-2 border-[#c92332]/20 border-t-[#c92332] mb-3"
                 aria-hidden="true"
               />
-              <h3>Finding nearby kitchens...</h3>
-              <p>Fetching approved restaurants from the backend.</p>
+              <h3 className="text-lg font-serif font-bold text-[#24211D]">
+                {debouncedSearchText.trim()
+                  ? `Searching for "${debouncedSearchText.trim()}"...`
+                  : "Finding nearby kitchens..."}
+              </h3>
+              <p className="text-sm text-[#746C61]">
+                Fetching approved restaurants from the backend.
+              </p>
             </div>
-          ) : sortedRestaurants.length > 0 ? (
+          ) : apiError ? (
+            /* State 2: API Error State */
+            <div
+              className="empty-results border-rose-200 bg-rose-50/50 p-6 rounded-2xl"
+              role="alert"
+            >
+              <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-3 text-rose-600">
+                <AlertCircle size={24} aria-hidden="true" />
+              </div>
+              <h3 className="text-lg font-serif font-bold text-[#24211D] mb-1">
+                Unable to load restaurants
+              </h3>
+              <p className="text-sm text-[#746C61] max-w-md mx-auto mb-4">
+                {apiError}
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-[#c92332] text-white text-xs font-semibold rounded-xl hover:bg-[#a81c29] transition-colors cursor-pointer"
+                  onClick={handleRetry}
+                >
+                  Try Again
+                </button>
+                <button
+                  type="button"
+                  className="px-4 py-2 border border-[#eee4d6] bg-white text-xs font-semibold text-[#746C61] rounded-xl hover:bg-[#fffefa] transition-colors cursor-pointer"
+                  onClick={clearAllFilters}
+                >
+                  Reset Filters
+                </button>
+              </div>
+            </div>
+          ) : backendRestaurants.length > 0 ? (
+            /* State 3: Populated Results Grid — directly renders backend API response without client-side modifications */
             <div className="restaurant-grid">
-              {sortedRestaurants.map((restaurant) => {
+              {backendRestaurants.map((restaurant) => {
                 const isFavorite = favorites.includes(restaurant.id);
                 return (
                   <RestaurantCard
@@ -345,17 +292,27 @@ export default function Restaurants({
               })}
             </div>
           ) : (
+            /* State 4: Empty Results State */
             <div className="empty-results">
-              <h3>No restaurants found</h3>
-              <p>
+              <div className="w-12 h-12 rounded-full bg-[#f3eae0] flex items-center justify-center mx-auto mb-3 text-[#c92332]">
+                <UtensilsCrossed size={22} aria-hidden="true" />
+              </div>
+              <h3 className="text-lg font-serif font-bold text-[#24211D] mb-1">
+                No restaurants found
+              </h3>
+              <p className="text-sm text-[#746C61] max-w-md mx-auto mb-4">
                 {showFavorites
                   ? "You have not saved any restaurants as favorites yet."
-                  : "We couldn't find any restaurants matching your current criteria."}
+                  : debouncedSearchText.trim()
+                  ? `No kitchens matching "${debouncedSearchText.trim()}". Try a different name or clear your search.`
+                  : openNow
+                  ? "No restaurants are currently open matching your criteria."
+                  : "We couldn't find any approved restaurants matching your request."}
               </p>
               <button
                 type="button"
-                className="clear-search-button mt-4"
-                onClick={clearFilters}
+                className="clear-search-button cursor-pointer"
+                onClick={clearAllFilters}
               >
                 Reset Filters
               </button>

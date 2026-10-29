@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -15,6 +15,8 @@ import Navbar from "../components/common/Navbar.jsx";
 import Footer from "../components/common/Footer.jsx";
 import { fetchOrderById } from "../services/orderService.js";
 import "../App.css";
+
+const POLL_INTERVAL_MS = 20_000; // 20 seconds automatic refresh interval
 
 const ORDER_STEPS = [
   { key: "PENDING", label: "Order Placed", icon: Package },
@@ -37,34 +39,83 @@ export default function OrderTracking({ cartItems = [] }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const isRequestInProgressRef = useRef(false);
+  const isMountedRef = useRef(true);
+
   function loadOrder(refresh = false) {
+    if (!orderId) return;
+
+    // Prevent overlapping requests
+    if (isRequestInProgressRef.current) return;
+    isRequestInProgressRef.current = true;
+
     if (refresh) {
       setIsRefreshing(true);
-    } else {
+    } else if (!order) {
       setIsLoading(true);
     }
     setErrorMessage("");
 
     fetchOrderById(orderId)
       .then((data) => {
+        if (!isMountedRef.current) return;
         setOrder(data);
       })
       .catch((err) => {
-        setErrorMessage(
-          err instanceof Error
-            ? err.message
-            : "Could not load order details.",
-        );
+        if (!isMountedRef.current) return;
+        setOrder((currentOrder) => {
+          // If order is already loaded, handle temporary failure gracefully without wiping order view
+          if (!currentOrder) {
+            setErrorMessage(
+              err instanceof Error
+                ? err.message
+                : "Could not load order details.",
+            );
+          } else {
+            console.warn("Background order status update failed:", err);
+          }
+          return currentOrder;
+        });
       })
       .finally(() => {
-        setIsLoading(false);
-        setIsRefreshing(false);
+        isRequestInProgressRef.current = false;
+        if (isMountedRef.current) {
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
       });
   }
 
+  // Initial load and cleanup on orderId change or unmount
   useEffect(() => {
-    loadOrder();
+    isMountedRef.current = true;
+    loadOrder(false);
+
+    return () => {
+      isMountedRef.current = false;
+      isRequestInProgressRef.current = false;
+    };
   }, [orderId]);
+
+  const isOrderActive =
+    order !== null &&
+    order.status !== "DELIVERED" &&
+    order.status !== "CANCELLED";
+
+  // Automatic polling every 20 seconds while order is active
+  useEffect(() => {
+    if (!orderId || !isOrderActive) {
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      loadOrder(false);
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [orderId, isOrderActive]);
 
   function formatDate(isoString) {
     if (!isoString) return "";
@@ -83,6 +134,21 @@ export default function OrderTracking({ cartItems = [] }) {
 
   const currentStep = order ? getStepIndex(order.status) : 0;
   const isCancelled = order?.status === "CANCELLED";
+  const targetPercent = Math.min(100, Math.max(0, (currentStep / 4) * 100));
+  const [animatedWidth, setAnimatedWidth] = useState("0%");
+
+  useEffect(() => {
+    if (!order) {
+      setAnimatedWidth("0%");
+      return;
+    }
+    // Animate the red progress indicator from left to right on load/update
+    const timer = setTimeout(() => {
+      setAnimatedWidth(`${targetPercent}%`);
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [order, targetPercent]);
 
   return (
     <div className="food-home order-tracking-page">
@@ -179,43 +245,123 @@ export default function OrderTracking({ cartItems = [] }) {
                 </div>
               </div>
 
-              {/* Progress Stepper */}
+              {/* Progress Stepper with Animated Red Progress Indicator */}
               {isCancelled ? (
                 <div className="rounded-xl bg-rose-50 border border-rose-200 p-4 text-center text-xs text-rose-700 font-medium">
                   This order was cancelled.
                 </div>
               ) : (
-                <div className="pt-4 border-t border-[#eee4d6]">
-                  <div className="grid grid-cols-5 gap-1 text-center">
-                    {ORDER_STEPS.map((step, idx) => {
-                      const Icon = step.icon;
-                      const isComplete = idx <= currentStep;
-                      const isCurrentStep = idx === currentStep;
+                <div className="pt-5 border-t border-[#eee4d6]">
+                  <div className="relative">
+                    {/* Background track line */}
+                    <div
+                      className="absolute top-[18px] sm:top-[20px] left-[10%] right-[10%] h-[3px] bg-[#eee4d6] rounded-full overflow-hidden pointer-events-none"
+                      aria-hidden="true"
+                    >
+                      {/* Animated red active progress bar */}
+                      <div
+                        className={`h-full rounded-full transition-all duration-1000 ease-out hh-track-bar ${
+                          !isCancelled && currentStep < 4 ? "hh-anim-track" : ""
+                        }`}
+                        style={{ width: animatedWidth }}
+                      />
+                    </div>
 
-                      return (
-                        <div key={step.key} className="flex flex-col items-center">
-                          <div
-                            className={`w-9 h-9 rounded-full flex items-center justify-center transition mb-1.5 ${
-                              isComplete
-                                ? "bg-[#c92332] text-white"
-                                : "bg-[#eee4d6] text-[#746C61]"
-                            } ${isCurrentStep ? "ring-4 ring-[#c92332]/20" : ""}`}
-                          >
-                            <Icon size={16} />
+                    {/* Timeline step items */}
+                    <div className="relative z-10 grid grid-cols-5 gap-1 text-center">
+                      {ORDER_STEPS.map((step, idx) => {
+                        const Icon = step.icon;
+                        const isComplete = idx < currentStep || currentStep === 4;
+                        const isCurrentStep = idx === currentStep && currentStep < 4;
+                        const isUpcoming = idx > currentStep && !isCancelled;
+
+                        return (
+                          <div key={step.key} className="flex flex-col items-center">
+                            <div
+                              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-500 mb-1.5 relative ${
+                                isComplete
+                                  ? "bg-[#c92332] text-white shadow-sm"
+                                  : isCurrentStep
+                                  ? "bg-[#c92332] text-white shadow-md ring-4 ring-[#c92332]/25"
+                                  : "bg-[#fffefa] border-2 border-[#eee4d6] text-[#746C61]/70"
+                              } ${isUpcoming ? "hh-anim-upcoming" : ""}`}
+                              style={
+                                isUpcoming
+                                  ? { animationDelay: `${(idx - currentStep) * 600}ms` }
+                                  : undefined
+                              }
+                            >
+                              {isCurrentStep && !isCancelled && (
+                                <span
+                                  className="hh-anim-ping absolute -inset-1 rounded-full bg-[#c92332]/35 animate-ping pointer-events-none"
+                                  style={{ animationDuration: "2.2s" }}
+                                  aria-hidden="true"
+                                />
+                              )}
+                              <Icon size={16} className="relative z-10" />
+                            </div>
+                            <span
+                              className={`text-[10px] sm:text-xs leading-tight font-semibold transition-colors ${
+                                isComplete
+                                  ? "text-[#24211d]"
+                                  : isCurrentStep
+                                  ? "text-[#c92332] font-bold"
+                                  : "text-[#746C61]/70"
+                              }`}
+                            >
+                              {step.label}
+                            </span>
                           </div>
-                          <span
-                            className={`text-[10px] leading-tight font-semibold ${
-                              isComplete ? "text-[#24211d]" : "text-[#746C61]/70"
-                            }`}
-                          >
-                            {step.label}
-                          </span>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
+
+              {/* Decorative Animation Keyframes & Accessibility */}
+              <style>{`
+                @keyframes hhTrackWave {
+                  0% { background-position: 100% 0; }
+                  100% { background-position: -100% 0; }
+                }
+
+                @keyframes hhUpcomingPulse {
+                  0%, 100% {
+                    border-color: #eee4d6;
+                    color: #9c9386;
+                    box-shadow: 0 0 0 0 rgba(201, 35, 50, 0);
+                  }
+                  50% {
+                    border-color: rgba(201, 35, 50, 0.45);
+                    color: #c92332;
+                    box-shadow: 0 0 10px rgba(201, 35, 50, 0.2);
+                  }
+                }
+
+                .hh-track-bar {
+                  background: linear-gradient(90deg, #c92332 0%, #ff4d5e 50%, #c92332 100%);
+                  background-size: 200% 100%;
+                }
+
+                .hh-anim-track {
+                  animation: hhTrackWave 2.8s linear infinite;
+                }
+
+                .hh-anim-upcoming {
+                  animation: hhUpcomingPulse 3s ease-in-out infinite;
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                  .hh-anim-track,
+                  .hh-anim-ping,
+                  .hh-anim-upcoming,
+                  .hh-track-bar {
+                    animation: none !important;
+                    transition: none !important;
+                  }
+                }
+              `}</style>
 
               {/* Preparation time estimate if provided by backend */}
               {order.estimatedPreparationMinutes && (

@@ -16,6 +16,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 import Intro from "./pages/Intro.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { CartProvider, useCart } from "./context/CartContext.jsx";
+import { FavoritesProvider } from "./context/FavoritesContext.jsx";
 
 function AppRoutes() {
   const { cartItems, addToCart, clearCart } = useCart();
@@ -166,9 +167,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <AppRoutes />
-      </CartProvider>
+      <FavoritesProvider>
+        <CartProvider>
+          <AppRoutes />
+        </CartProvider>
+      </FavoritesProvider>
     </AuthProvider>
   );
 }

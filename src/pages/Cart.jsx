@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { ArrowLeft, ShoppingBag, Trash2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Navbar from "../components/common/Navbar.jsx";
 import Sidebar from "../components/common/Sidebar.jsx";
 import Footer from "../components/common/Footer.jsx";
@@ -10,6 +10,26 @@ import { useCart } from "../context/CartContext.jsx";
 import "../App.css";
 
 export default function Cart() {
+  const location = useLocation();
+
+  // Ensure the page always opens at the very top and prevent browser scroll restoration retention
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const originalScrollRestoration = window.history.scrollRestoration;
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+
+    return () => {
+      if ("scrollRestoration" in window.history && originalScrollRestoration) {
+        window.history.scrollRestoration = originalScrollRestoration;
+      }
+    };
+  }, [location.pathname]);
+
   const {
     cartItems,
     cartSubtotal,
@@ -29,7 +49,7 @@ export default function Cart() {
   }
 
   return (
-    <div className="food-home cart-page">
+    <div className="food-home cart-page" id="top">
       <Navbar
         favoriteCount={0}
         cartItems={cartItems}

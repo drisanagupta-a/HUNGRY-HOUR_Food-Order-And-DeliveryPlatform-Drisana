@@ -32,6 +32,26 @@ export async function fetchRestaurants({ q, open } = {}) {
 }
 
 /**
+ * Fetch customer's favorite restaurants from the backend.
+ * Endpoint: GET /api/customer/restaurants/favourites
+ * Supported query parameter: limit (integer, default: 5)
+ * Requires authenticated customer session (sb-access-token cookie).
+ */
+export async function fetchFavoriteRestaurants({ limit = 50 } = {}) {
+  const params = new URLSearchParams();
+  if (typeof limit === "number") {
+    params.append("limit", String(limit));
+  }
+  const queryString = params.toString() ? `?${params.toString()}` : "";
+  return requestJson(
+    `/api/customer/restaurants/favourites${queryString}`,
+    "GET",
+    undefined,
+    true,
+  );
+}
+
+/**
  * Fetch specific restaurant details by ID.
  * Endpoint: GET /api/customer/restaurants/{restaurantId}
  */
@@ -135,3 +155,38 @@ export function adaptFoodItem(raw) {
     isBackendData: true,
   };
 }
+
+/**
+ * Extracts unique, sorted cuisine tags from a list of restaurants.
+ * Handles both single-cuisine and compound-cuisine strings (e.g. "Burgers · American").
+ *
+ * @param {Array<{ cuisine?: string }>} restaurants
+ * @returns {string[]} Sorted array of unique cuisine names.
+ */
+export function extractCuisines(restaurants) {
+  if (!Array.isArray(restaurants)) return [];
+  const cuisineSet = new Set();
+
+  for (const item of restaurants) {
+    if (!item?.cuisine) continue;
+    const raw = String(item.cuisine).trim();
+    if (!raw) continue;
+
+    // Split compound cuisines like "Burgers · American", "Pizza, Italian", or "Asian / Chinese"
+    const parts = raw
+      .split(/[·,/|&]/)
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0);
+
+    if (parts.length > 0) {
+      for (const part of parts) {
+        cuisineSet.add(part);
+      }
+    } else {
+      cuisineSet.add(raw);
+    }
+  }
+
+  return Array.from(cuisineSet).sort((a, b) => a.localeCompare(b));
+}
+

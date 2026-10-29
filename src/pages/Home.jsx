@@ -4,10 +4,13 @@ import Sidebar from "../components/common/Sidebar.jsx";
 import Footer from "../components/common/Footer.jsx";
 import Hero from "../components/home/Hero.jsx";
 import CategorySection from "../components/home/CategorySection.jsx";
+import RecommendationSection from "../components/home/RecommendationSection.jsx";
 import RestaurantSection from "../components/home/RestaurantSection.jsx";
 import PopularDishes from "../components/home/PopularDishes.jsx";
 import { foodCategories, mockDishes, mockRestaurants } from "../data/mockRestaurants.js";
 import { adaptRestaurant, extractArray, fetchRestaurants } from "../services/restaurantService.js";
+import { useFavorites } from "../context/FavoritesContext.jsx";
+import { useDebounce } from "../hooks/useDebounce.js";
 import "../App.css";
 
 const promotions = [
@@ -124,7 +127,7 @@ export default function Home({
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("recommended");
-  const [favorites, setFavorites] = useState([]);
+  const { favorites, toggleFavorite, favoriteCount } = useFavorites();
   const [showFavorites, setShowFavorites] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeSection, setActiveSection] = useState("home");
@@ -134,6 +137,7 @@ export default function Home({
   const [isLoadingRestaurants, setIsLoadingRestaurants] = useState(true);
   const [restaurantApiError, setRestaurantApiError] = useState("");
 
+  const debouncedSearchText = useDebounce(searchText, 350);
   const search = normalizeSearchText(searchText);
 
   useEffect(() => {
@@ -141,7 +145,7 @@ export default function Home({
     setIsLoadingRestaurants(true);
     setRestaurantApiError("");
 
-    fetchRestaurants({ q: searchText.trim() || undefined })
+    fetchRestaurants({ q: debouncedSearchText.trim() || undefined })
       .then((data) => {
         if (!isCurrent) return;
         const list = extractArray(data);
@@ -168,7 +172,7 @@ export default function Home({
     return () => {
       isCurrent = false;
     };
-  }, [searchText]);
+  }, [debouncedSearchText]);
 
   const hasBackendRestaurants = backendRestaurants.length > 0;
   const activeRestaurants = hasBackendRestaurants
@@ -341,14 +345,6 @@ export default function Home({
       )
     : matchingRestaurants;
 
-  function toggleFavorite(restaurantId) {
-    setFavorites((currentFavorites) =>
-      currentFavorites.includes(restaurantId)
-        ? currentFavorites.filter((id) => id !== restaurantId)
-        : [...currentFavorites, restaurantId],
-    );
-  }
-
   function selectCategory(category) {
     setSelectedCategory(category);
     setShowFavorites(false);
@@ -367,7 +363,7 @@ export default function Home({
       <Navbar
         searchText={searchText}
         setSearchText={setSearchText}
-        favoriteCount={favorites.length}
+        favoriteCount={favoriteCount}
         cartItems={cartItems}
         homePath={previewEnabled ? "/dev-dashboard-preview" : "/home"}
         showLogout={!previewEnabled}
@@ -403,6 +399,9 @@ export default function Home({
             selectedCategory={selectedCategory}
             onSelectCategory={selectCategory}
           />
+
+          {/* AI-Powered Recommendations Section */}
+          <RecommendationSection selectedCategory={selectedCategory} />
 
           {/* 5. Top Restaurants Section (immediately below categories) */}
           <RestaurantSection
