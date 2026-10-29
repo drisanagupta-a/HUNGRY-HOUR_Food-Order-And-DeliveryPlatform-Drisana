@@ -4069,6 +4069,7 @@
 
 /* Remove horizontal centering so content aligns flush to left beside sidebar */
 .dashboard-main-content .figma-hero-section,
+.dashboard-main-content .dashboard-hero-banner,
 .dashboard-main-content .food-categories-section,
 .dashboard-main-content .home-section,
 .dashboard-main-content .restaurant-section,
@@ -4112,359 +4113,42 @@
 }
 
 /* ==========================================================================
-   FIGMA HERO SECTION
+   DASHBOARD HERO BANNER (frame44.svg)
    ========================================================================== */
-.figma-hero-section {
+.dashboard-hero-banner {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 28px;
   position: relative;
-  margin-bottom: 32px;
-}
-
-.hero-banners-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-  align-items: stretch;
-}
-
-@media (min-width: 1024px) {
-  .hero-banners-grid {
-    grid-template-columns: 1fr 280px;
-  }
-}
-
-@media (min-width: 1280px) {
-  .hero-banners-grid {
-    grid-template-columns: 1fr 310px;
-  }
-}
-
-/* Yellow Promotional Banner */
-.hero-yellow-banner {
-  background: var(--food-citrus); /* #F4C369 */
-  border-radius: 9px;
-  padding: 32px 28px;
-  position: relative;
-  overflow: hidden; /* crops edges neatly within yellow banner, preventing overlap with pink card */
-  min-height: 260px;
-  display: flex;
-  align-items: center;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #F4C369;
   box-shadow: 0 4px 18px rgba(244, 195, 105, 0.22);
 }
 
-@media (max-width: 640px) {
-  .hero-yellow-banner {
-    padding: 24px 18px;
-    min-height: 220px;
-  }
-}
-
-.yellow-banner-content {
-  position: relative;
-  z-index: 10;
-  max-width: 450px;
-}
-
-.banner-eyebrow-tag {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.6);
-  color: var(--food-forest);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 4px 10px;
-  border-radius: 9px;
-  margin-bottom: 12px;
-}
-
-.banner-main-headline {
-  font-family: Georgia, "Playfair Display", serif;
-  font-size: clamp(24px, 3.2vw, 36px);
-  font-weight: 800;
-  line-height: 1.15;
-  color: #24211D;
-  margin: 0 0 10px 0;
-}
-
-.banner-sub-description {
-  font-size: clamp(13px, 1.4vw, 15px);
-  color: #4a3e28;
-  line-height: 1.5;
-  margin: 0 0 20px 0;
-}
-
-.banner-order-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--food-red); /* #D90429 */
-  color: #ffffff;
-  padding: 11px 22px;
-  border-radius: 9px;
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
-  box-shadow: 0 4px 14px rgba(217, 4, 41, 0.35);
-  transition: all 0.2s ease;
-}
-
-.banner-order-button:hover {
-  background: var(--food-red-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(217, 4, 41, 0.45);
-}
-
-/* Balanced Decorative Composition on Upper-Right of Yellow Banner */
-.yellow-banner-composition {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 55%;
-  min-width: 320px;
-  pointer-events: none;
-  z-index: 2;
-  overflow: hidden;
-}
-
-.comp-asset {
-  position: absolute;
-  pointer-events: none;
-  user-select: none;
-  object-fit: contain;
-  backface-visibility: hidden;
-}
-
-/* 1. Checkered Cloth SVG in upper-right corner behind bowl/bread */
-.comp-cloth {
-  top: -24px;
-  right: -10px;
-  width: 140px;
+.dashboard-hero-banner-img {
+  width: 100%;
   height: auto;
-  transform: rotate(5deg);
-  z-index: 1;
-  opacity: 0.95;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.08));
+  aspect-ratio: 750 / 255;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 12px;
 }
 
-/* 2. Food Bowl / Pita Bread SVG in upper right corner with intentional edge crop */
-.comp-bowlbread {
-  top: -20px;
-  right: -15px;
-  width: 155px;
-  height: auto;
-  z-index: 3;
-  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.16));
-}
-
-/* 3. Mediterranean Food Plate in upper area to the left of the bowl, separated without excessive overlap */
-.comp-plate {
-  top: 14px;
-  right: 160px;
-  width: 130px;
-  height: 130px;
-  z-index: 2;
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.12));
-}
-
-/* 4. Olive Leaves Accent at top edge above the plate */
-.comp-olive-leaves {
-  top: -10px;
-  right: 260px;
-  width: 52px;
-  height: auto;
-  transform: rotate(-16deg);
-  z-index: 1;
-  opacity: 0.88;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.08));
-}
-
-/* 5. Orange Drink in its own clear lower-right position, completely clear of the bowl above */
-.comp-orange-drink {
-  bottom: 12px;
-  right: 24px;
-  width: 82px;
-  height: auto;
-  z-index: 4;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.14));
-}
-
-/* 6. Olive Bowl in lower area below the plate, separated from the drink */
-.comp-olive-bowl {
-  bottom: 20px;
-  right: 126px;
-  width: 65px;
-  height: auto;
-  z-index: 4;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.11));
-}
-
-/* 7. Lemon Accent between olive bowl and orange drink */
-.comp-lemon {
-  bottom: 8px;
-  right: 92px;
-  width: 30px;
-  height: auto;
-  z-index: 5;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.1));
-}
-
-@media (max-width: 1200px) {
-  .yellow-banner-composition {
-    width: 52%;
+@media (max-width: 768px) {
+  .dashboard-hero-banner {
+    margin-bottom: 20px;
+    border-radius: 10px;
   }
-  .comp-cloth {
-    width: 120px;
-  }
-  .comp-bowlbread {
-    width: 135px;
-  }
-  .comp-plate {
-    width: 110px;
-    height: 110px;
-    right: 135px;
-  }
-  .comp-olive-leaves {
-    right: 220px;
-    width: 42px;
-  }
-  .comp-orange-drink {
-    width: 70px;
-    right: 18px;
-  }
-  .comp-olive-bowl {
-    width: 55px;
-    right: 105px;
-  }
-  .comp-lemon {
-    width: 25px;
-    right: 76px;
-  }
-}
-
-@media (max-width: 767px) {
-  .hero-yellow-banner {
-    padding: 24px 18px;
-    min-height: 220px;
-  }
-  .yellow-banner-content {
-    max-width: 100%;
-  }
-  .yellow-banner-composition {
-    width: 68%;
-    opacity: 0.35;
-  }
-}
-
-@media (max-width: 480px) {
-  .yellow-banner-composition {
-    opacity: 0.22;
+  .dashboard-hero-banner-img {
+    border-radius: 10px;
   }
 }
 
 /* Restaurants Page Header */
 .restaurants-page-header {
   margin-bottom: 28px;
-}
-
-/* Pink Promotional Card */
-.hero-pink-card {
-  background: #F3CCBB;
-  border-radius: 9px;
-  padding: 24px 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-  overflow: hidden;
-  min-height: 255px;
-  box-shadow: 0 4px 16px rgba(243, 204, 187, 0.28);
-}
-
-.pink-eyebrow-tag {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.6);
-  color: var(--food-red);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 3px 8px;
-  border-radius: 9px;
-  margin-bottom: 8px;
-}
-
-.pink-main-headline {
-  font-family: Georgia, "Playfair Display", serif;
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1.25;
-  color: #24211D;
-  margin: 0 0 4px 0;
-}
-
-.pink-sub-description {
-  font-size: 12px;
-  color: #634d43;
-  margin: 0;
-}
-
-.pink-card-visuals {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 0;
-}
-
-.pink-drink-img {
-  width: 95px;
-  height: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.12));
-  transition: transform 0.25s ease;
-}
-
-.hero-pink-card:hover .pink-drink-img {
-  transform: scale(1.05) rotate(-2deg);
-}
-
-.pink-lemon-img {
-  position: absolute;
-  bottom: 0px;
-  right: 15px;
-  width: 36px;
-  height: auto;
-  opacity: 0.9;
-}
-
-/* Claim Offer button with pure white text and forest-green background */
-.food-home .pink-claim-button,
-.pink-claim-button {
-  display: block;
-  text-align: center;
-  background: #243B2A !important;
-  background-color: #243B2A !important;
-  color: #FFFFFF !important;
-  padding: 10px 16px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(36, 59, 42, 0.2);
-}
-
-.food-home .pink-claim-button:hover,
-.pink-claim-button:hover,
-.food-home .pink-claim-button:focus,
-.pink-claim-button:focus,
-.food-home .pink-claim-button:visited,
-.pink-claim-button:visited,
-.food-home .pink-claim-button:active,
-.pink-claim-button:active {
-  background: #17261B !important;
-  background-color: #17261B !important;
-  color: #FFFFFF !important;
-  transform: translateY(-1px);
 }
 
 /* ==========================================================================
