@@ -61,15 +61,18 @@ export default function Cart() {
         onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
       />
 
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        cartCount={cartItems.reduce((acc, i) => acc + (i.quantity || 1), 0)}
-        activeSection="cart"
-      />
+      {/* Dashboard Layout: Left Sidebar + Main Content Area */}
+      <div className="dashboard-layout-wrapper">
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          cartCount={cartItems.reduce((acc, i) => acc + (i.quantity || 1), 0)}
+          activeSection="cart"
+        />
 
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
+        <main className="dashboard-main-content cart-main-content">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center justify-between mb-6">
           <Link
             to="/restaurants"
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#c92332] hover:underline"
@@ -165,7 +168,9 @@ export default function Cart() {
             </div>
           </div>
         )}
-      </main>
+          </div>
+        </main>
+      </div>
 
       {/* Clear Cart Confirmation Dialog */}
       {showClearConfirm && (
