@@ -82,4 +82,13 @@ export const changePasswordSchema = z
   .refine((values) => values.currentPassword !== values.newPassword, {
     message: "New password must be different from current password.",
     path: ["newPassword"],
-  });
+  });
+
+export const profileUpdateSchema = z.object({
+  fullName: z
+    .string()
+    .trim()
+    .min(2, "Full name must be at least 2 characters.")
+    .max(100, "Full name must be 100 characters or fewer."),
+});
+

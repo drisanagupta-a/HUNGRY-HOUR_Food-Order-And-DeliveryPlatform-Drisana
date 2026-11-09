@@ -251,3 +251,12 @@ export function checkConfiguredPublicEndpoint(timeoutMs = 12_000) {
 export function getMyProfile() {
   return requestJson("/api/profiles/me", "GET", undefined, true, 120_000);
 }
+
+/**
+ * Updates the authenticated user's profile.
+ * Endpoint: PUT /api/profiles/me
+ * Payload: { fullName: string }
+ */
+export function updateMyProfile(profileData) {
+  return requestJson("/api/profiles/me", "PUT", profileData, true);
+}
