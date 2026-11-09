@@ -15,6 +15,7 @@ export async function requestJson(
   refreshOnUnauthorized = false,
   timeoutMs = 0,
   deadlineAt = null,
+  customHeaders = null,
 ) {
   if (!API_BASE_URL) {
     throw new Error("Set VITE_API_BASE_URL before using authentication.");
@@ -46,9 +47,16 @@ export async function requestJson(
     options.signal = controller.signal;
   }
 
+  const headers = {};
   if (data) {
-    options.headers = { "Content-Type": "application/json" };
+    headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(data);
+  }
+  if (customHeaders && typeof customHeaders === "object") {
+    Object.assign(headers, customHeaders);
+  }
+  if (Object.keys(headers).length > 0) {
+    options.headers = headers;
   }
 
   let response;
@@ -88,6 +96,7 @@ export async function requestJson(
       false,
       timeoutMs,
       requestDeadline,
+      customHeaders,
     );
   }
 
@@ -153,6 +162,29 @@ export function requestPasswordReset(email) {
   return requestJson("/api/auth/forgot-password", "POST", { email });
 }
 
+export function verifyRecoveryOtp(email, token) {
+  return requestJson("/api/auth/verify-recovery-otp", "POST", { email, token });
+}
+
+export function updatePasswordWithRecovery(newPassword, recoveryToken) {
+  const customHeaders = recoveryToken
+    ? { Authorization: `Bearer ${recoveryToken}` }
+    : undefined;
+  return requestJson(
+    "/api/auth/update-password",
+    "POST",
+    { newPassword },
+    false,
+    0,
+    null,
+    customHeaders,
+  );
+}
+
+/**
+ * Updates password for an authenticated account session.
+ * Endpoint: PUT /api/account/password
+ */
 export function updatePassword(newPassword) {
   return requestJson("/api/account/password", "PUT", { newPassword }, true);
 }

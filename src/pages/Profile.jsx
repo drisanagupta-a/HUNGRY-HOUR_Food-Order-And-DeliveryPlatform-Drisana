@@ -1,8 +1,24 @@
-import { ArrowLeft, Calendar, CheckCircle2, Shield, User } from "lucide-react";
+import { useState } from "react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Calendar,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Lock,
+  Shield,
+  User,
+} from "lucide-react";
 import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Navbar from "../components/common/Navbar.jsx";
 import Footer from "../components/common/Footer.jsx";
+import FormField from "../components/auth/FormField.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { changePasswordSchema } from "../schemas/authSchema.js";
+import { updatePassword } from "../services/authService.js";
 import "../App.css";
 
 function formatDate(isoString) {
@@ -18,6 +34,186 @@ function formatDate(isoString) {
   } catch {
     return "N/A";
   }
+}
+
+function ChangePasswordSection() {
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [formError, setFormError] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmNewPassword: "",
+    },
+  });
+
+  const onSubmit = async ({ newPassword }) => {
+    setFormError("");
+    setSuccessMessage("");
+
+    try {
+      // Calls PUT /api/account/password with { newPassword } using cookie credentials
+      await updatePassword(newPassword);
+      setSuccessMessage("Your password has been changed successfully.");
+      reset();
+    } catch (error) {
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "Failed to update password. Please check your credentials and try again.",
+      );
+    }
+  };
+
+  return (
+    <section
+      className="profile-security-card"
+      aria-labelledby="change-password-heading"
+    >
+      <div className="profile-security-header">
+        <div className="profile-security-icon" aria-hidden="true">
+          <Lock size={20} />
+        </div>
+        <div>
+          <h2 id="change-password-heading">Change Password</h2>
+          <p>Update your password to keep your account secure.</p>
+        </div>
+      </div>
+
+      {successMessage && (
+        <div className="profile-alert profile-alert-success" role="status">
+          <CheckCircle2 size={16} aria-hidden="true" />
+          <span>{successMessage}</span>
+        </div>
+      )}
+
+      {formError && (
+        <div className="profile-alert profile-alert-error" role="alert">
+          <AlertCircle size={16} aria-hidden="true" />
+          <span>{formError}</span>
+        </div>
+      )}
+
+      <form
+        className="profile-password-form"
+        onSubmit={handleSubmit(onSubmit, () => {
+          setFormError("");
+          setSuccessMessage("");
+        })}
+        noValidate
+      >
+        <FormField
+          id="current-password"
+          label="Current password"
+          type={showCurrentPassword ? "text" : "password"}
+          autoComplete="current-password"
+          placeholder="Enter your current password"
+          register={register("currentPassword")}
+          error={errors.currentPassword?.message}
+          trailingContent={
+            <button
+              type="button"
+              onClick={() => setShowCurrentPassword((prev) => !prev)}
+              aria-label={
+                showCurrentPassword
+                  ? "Hide current password"
+                  : "Show current password"
+              }
+              aria-pressed={showCurrentPassword}
+              className="rounded-md p-1 text-[#746C61] hover:text-[#000000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F]"
+            >
+              {showCurrentPassword ? (
+                <EyeOff aria-hidden="true" size={16} />
+              ) : (
+                <Eye aria-hidden="true" size={16} />
+              )}
+            </button>
+          }
+        />
+
+        <FormField
+          id="new-password"
+          label="New password"
+          type={showNewPassword ? "text" : "password"}
+          autoComplete="new-password"
+          placeholder="At least 8 characters"
+          register={register("newPassword")}
+          error={errors.newPassword?.message}
+          trailingContent={
+            <button
+              type="button"
+              onClick={() => setShowNewPassword((prev) => !prev)}
+              aria-label={
+                showNewPassword ? "Hide new password" : "Show new password"
+              }
+              aria-pressed={showNewPassword}
+              className="rounded-md p-1 text-[#746C61] hover:text-[#000000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F]"
+            >
+              {showNewPassword ? (
+                <EyeOff aria-hidden="true" size={16} />
+              ) : (
+                <Eye aria-hidden="true" size={16} />
+              )}
+            </button>
+          }
+        />
+
+        <FormField
+          id="confirm-new-password"
+          label="Confirm new password"
+          type={showConfirmPassword ? "text" : "password"}
+          autoComplete="new-password"
+          placeholder="Enter new password again"
+          register={register("confirmNewPassword")}
+          error={errors.confirmNewPassword?.message}
+          trailingContent={
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword((prev) => !prev)}
+              aria-label={
+                showConfirmPassword
+                  ? "Hide confirmation password"
+                  : "Show confirmation password"
+              }
+              aria-pressed={showConfirmPassword}
+              className="rounded-md p-1 text-[#746C61] hover:text-[#000000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1011F]"
+            >
+              {showConfirmPassword ? (
+                <EyeOff aria-hidden="true" size={16} />
+              ) : (
+                <Eye aria-hidden="true" size={16} />
+              )}
+            </button>
+          }
+        />
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="profile-submit-btn"
+        >
+          {isSubmitting ? (
+            <>
+              <span className="profile-btn-spinner" aria-hidden="true" />
+              <span>Updating password...</span>
+            </>
+          ) : (
+            "Update password"
+          )}
+        </button>
+      </form>
+    </section>
+  );
 }
 
 export default function Profile({ cartItems = [] }) {
@@ -50,84 +246,88 @@ export default function Profile({ cartItems = [] }) {
           </header>
 
           {user ? (
-            <div className="profile-card">
-              <div className="profile-card-top">
-                <div className="profile-avatar-large" aria-hidden="true">
-                  {user.fullName ? (
-                    user.fullName.charAt(0).toUpperCase()
-                  ) : (
-                    <User size={32} />
-                  )}
+            <>
+              <div className="profile-card">
+                <div className="profile-card-top">
+                  <div className="profile-avatar-large" aria-hidden="true">
+                    {user.fullName ? (
+                      user.fullName.charAt(0).toUpperCase()
+                    ) : (
+                      <User size={32} />
+                    )}
+                  </div>
+                  <div className="profile-title-block">
+                    <h2>{user.fullName}</h2>
+                    <div className="profile-badges">
+                      {user.accountStatus && (
+                        <span className="profile-status-badge">
+                          <CheckCircle2 size={13} aria-hidden="true" />
+                          {user.accountStatus}
+                        </span>
+                      )}
+                      {user.role && (
+                        <span className="profile-role-badge">
+                          <Shield size={13} aria-hidden="true" />
+                          {user.role}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="profile-title-block">
-                  <h2>{user.fullName}</h2>
-                  <div className="profile-badges">
-                    {user.accountStatus && (
-                      <span className="profile-status-badge">
-                        <CheckCircle2 size={13} aria-hidden="true" />
-                        {user.accountStatus}
+
+                <div className="profile-details-grid">
+                  <div className="profile-detail-item">
+                    <div className="profile-detail-icon">
+                      <User size={18} aria-hidden="true" />
+                    </div>
+                    <div className="profile-detail-content">
+                      <span className="profile-detail-label">Full Name</span>
+                      <span className="profile-detail-value">
+                        {user.fullName || "Not provided"}
                       </span>
-                    )}
-                    {user.role && (
-                      <span className="profile-role-badge">
-                        <Shield size={13} aria-hidden="true" />
-                        {user.role}
+                    </div>
+                  </div>
+
+                  <div className="profile-detail-item">
+                    <div className="profile-detail-icon">
+                      <Shield size={18} aria-hidden="true" />
+                    </div>
+                    <div className="profile-detail-content">
+                      <span className="profile-detail-label">Role</span>
+                      <span className="profile-detail-value capitalize">
+                        {user.role || "Customer"}
                       </span>
-                    )}
+                    </div>
+                  </div>
+
+                  <div className="profile-detail-item">
+                    <div className="profile-detail-icon">
+                      <CheckCircle2 size={18} aria-hidden="true" />
+                    </div>
+                    <div className="profile-detail-content">
+                      <span className="profile-detail-label">Account Status</span>
+                      <span className="profile-detail-value">
+                        {user.accountStatus || "Active"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="profile-detail-item">
+                    <div className="profile-detail-icon">
+                      <Calendar size={18} aria-hidden="true" />
+                    </div>
+                    <div className="profile-detail-content">
+                      <span className="profile-detail-label">Member Since</span>
+                      <span className="profile-detail-value">
+                        {formatDate(user.createdAt)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="profile-details-grid">
-                <div className="profile-detail-item">
-                  <div className="profile-detail-icon">
-                    <User size={18} aria-hidden="true" />
-                  </div>
-                  <div className="profile-detail-content">
-                    <span className="profile-detail-label">Full Name</span>
-                    <span className="profile-detail-value">
-                      {user.fullName || "Not provided"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="profile-detail-item">
-                  <div className="profile-detail-icon">
-                    <Shield size={18} aria-hidden="true" />
-                  </div>
-                  <div className="profile-detail-content">
-                    <span className="profile-detail-label">Role</span>
-                    <span className="profile-detail-value capitalize">
-                      {user.role || "Customer"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="profile-detail-item">
-                  <div className="profile-detail-icon">
-                    <CheckCircle2 size={18} aria-hidden="true" />
-                  </div>
-                  <div className="profile-detail-content">
-                    <span className="profile-detail-label">Account Status</span>
-                    <span className="profile-detail-value">
-                      {user.accountStatus || "Active"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="profile-detail-item">
-                  <div className="profile-detail-icon">
-                    <Calendar size={18} aria-hidden="true" />
-                  </div>
-                  <div className="profile-detail-content">
-                    <span className="profile-detail-label">Member Since</span>
-                    <span className="profile-detail-value">
-                      {formatDate(user.createdAt)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+              <ChangePasswordSection />
+            </>
           ) : (
             <div className="profile-loading" role="status">
               <span className="profile-spinner" aria-hidden="true" />
