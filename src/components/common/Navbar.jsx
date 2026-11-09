@@ -12,22 +12,16 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, logOut } from "../../services/authService.js";
-import { fetchCustomerAddresses } from "../../services/orderService.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useCart } from "../../context/CartContext.jsx";
 import { useFavorites } from "../../context/FavoritesContext.jsx";
+import { useAddress } from "../../context/AddressContext.jsx";
+import AddressSelectorModal from "../address/AddressSelectorModal.jsx";
 import SearchBar from "./SearchBar.jsx";
 import hungryHourLogo from "../../assets/Group 9.svg";
 
-// Module-level cache to prevent duplicate API requests across Navbar mounts and re-renders
-let cachedHomeAddress = null;
-let cachedUserId = null;
-let addressFetchPromise = null;
-
 export function clearAddressCache() {
-  cachedHomeAddress = null;
-  cachedUserId = null;
-  addressFetchPromise = null;
+  // Preserved for backwards compatibility
 }
 
 export default function Navbar({
@@ -55,83 +49,12 @@ export default function Navbar({
   const navigate = useNavigate();
   const accountMenuRef = useRef(null);
 
-  // Address state for authenticated customer's Home address
-  const [homeAddress, setHomeAddress] = useState(() => {
-    if (user && cachedUserId === (user.id || user.email)) {
-      return cachedHomeAddress;
-    }
-    return null;
-  });
-  const [addressLoading, setAddressLoading] = useState(() => {
-    return Boolean(user && cachedUserId !== (user.id || user.email));
-  });
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    if (!user) {
-      setHomeAddress(null);
-      setAddressLoading(false);
-      return;
-    }
-
-    const currentUserId = user.id || user.email || "current-user";
-
-    // Use cached address if already resolved for this user
-    if (cachedUserId === currentUserId && cachedHomeAddress !== null) {
-      setHomeAddress(cachedHomeAddress);
-      setAddressLoading(false);
-      return;
-    }
-
-    // Reuse existing in-flight promise or start a new fetch
-    if (!addressFetchPromise || cachedUserId !== currentUserId) {
-      cachedUserId = currentUserId;
-      addressFetchPromise = fetchCustomerAddresses()
-        .then((addresses) => {
-          // Identify the address with label 'Home' (case-insensitive)
-          const homeAddr = Array.isArray(addresses)
-            ? addresses.find((addr) => {
-                if (!addr) return false;
-                const label =
-                  typeof addr.label === "string"
-                    ? addr.label.trim().toLowerCase()
-                    : "";
-                return label === "home";
-              })
-            : null;
-
-          const resolved =
-            homeAddr?.fullAddress ||
-            homeAddr?.address ||
-            homeAddr?.streetAddress ||
-            "";
-
-          cachedHomeAddress = resolved;
-          return resolved;
-        })
-        .catch((err) => {
-          console.warn("Could not retrieve customer addresses for navbar:", err);
-          cachedHomeAddress = ""; // Empty string denotes fetch attempted but no Home address
-          return "";
-        })
-        .finally(() => {
-          addressFetchPromise = null;
-        });
-    }
-
-    setAddressLoading(true);
-    addressFetchPromise.then((addr) => {
-      if (isCurrent) {
-        setHomeAddress(addr);
-        setAddressLoading(false);
-      }
-    });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [user]);
+  // Address state from centralized AddressContext
+  const {
+    selectedAddress,
+    openAddressSelector,
+    isLoading: addressLoading,
+  } = useAddress();
 
   // Close account dropdown on outside click or escape key
   useEffect(() => {
@@ -227,40 +150,59 @@ export default function Navbar({
             </span>
           </Link>
 
-          {/* Delivery Location with Location Icon */}
-          <Link
-            to={user ? "/profile" : "/login"}
+          {/* Delivery Location with Location Icon - Clickable Address Selector */}
+          <button
+            type="button"
+            onClick={() => {
+              if (user) {
+                openAddressSelector();
+              } else {
+                navigate("/login");
+              }
+            }}
             className="header-location-pill"
-            style={{ textDecoration: "none", color: "inherit" }}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              textAlign: "left",
+              padding: 0,
+              color: "inherit",
+              font: "inherit",
+            }}
             title={
               !user
                 ? `Delivery location: ${deliveryLocation}`
                 : addressLoading
                 ? "Loading saved address..."
-                : homeAddress
-                ? `Deliver to Home: ${homeAddress}`
-                : "No Home address found. Click to add a delivery address."
+                : selectedAddress
+                ? `Deliver to ${selectedAddress.label}: ${selectedAddress.fullAddress}`
+                : "No saved address. Click to add a delivery address."
             }
             aria-label={
               !user
                 ? `Delivery location: ${deliveryLocation}`
-                : homeAddress
-                ? `Deliver to Home: ${homeAddress}`
-                : "Add delivery address"
+                : selectedAddress
+                ? `Deliver to ${selectedAddress.label}: ${selectedAddress.fullAddress}`
+                : "Select delivery address"
             }
           >
             <MapPin size={16} className="location-pin" aria-hidden="true" />
             <div className="location-info">
-              <span className="location-label">Deliver to</span>
+              <span className="location-label">
+                Deliver to {selectedAddress?.label ? `• ${selectedAddress.label}` : ""}
+              </span>
               <span className="location-address">
                 {!user
                   ? deliveryLocation
                   : addressLoading
                   ? "Loading..."
-                  : homeAddress || "Add delivery address"}
+                  : selectedAddress
+                  ? selectedAddress.fullAddress
+                  : "Add delivery address"}
               </span>
             </div>
-          </Link>
+          </button>
         </div>
 
         {/* Center: Restaurant and food search bar */}
@@ -499,6 +441,8 @@ export default function Navbar({
           )}
         </div>
       </div>
+
+      <AddressSelectorModal />
     </header>
   );
 }

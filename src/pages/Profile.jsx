@@ -2,15 +2,21 @@ import { useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
+  Briefcase,
   Calendar,
+  Check,
   CheckCircle2,
   Edit2,
   Eye,
   EyeOff,
+  Home,
   Lock,
+  MapPin,
+  Plus,
   Shield,
   SlidersHorizontal,
   Smartphone,
+  Trash2,
   User,
   X,
 } from "lucide-react";
@@ -21,6 +27,8 @@ import Navbar from "../components/common/Navbar.jsx";
 import Footer from "../components/common/Footer.jsx";
 import FormField from "../components/auth/FormField.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useAddress } from "../context/AddressContext.jsx";
+import AddressFormModal from "../components/address/AddressFormModal.jsx";
 import {
   changePasswordSchema,
   profileUpdateSchema,
@@ -286,8 +294,290 @@ function CustomerProfileCard({ user }) {
   );
 }
 
+function getAddressLabelIcon(label) {
+  const normalized = (label || "").trim().toLowerCase();
+  if (normalized === "home") return Home;
+  if (normalized === "work" || normalized === "office") return Briefcase;
+  return MapPin;
+}
+
 // ---------------------------------------------------------------------------
-// 2. Customer Preferences (Device-Only, localStorage)
+// 2. Saved Addresses Management
+// ---------------------------------------------------------------------------
+function SavedAddressesSection() {
+  const {
+    addresses,
+    selectedAddress,
+    selectAddress,
+    deleteAddress,
+    setDefault,
+    isLoading,
+    addressError,
+  } = useAddress();
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [actionFeedback, setActionFeedback] = useState("");
+  const [actionError, setActionError] = useState("");
+
+  const handleOpenAdd = () => {
+    setEditingAddress(null);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEdit = (addr) => {
+    setEditingAddress(addr);
+    setIsFormOpen(true);
+  };
+
+  const handleSetDefault = async (addr) => {
+    setActionError("");
+    setActionFeedback("");
+    try {
+      await setDefault(addr.id);
+      setActionFeedback(`"${addr.label}" set as your default address.`);
+      setTimeout(() => setActionFeedback(""), 4000);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to set default address.",
+      );
+    }
+  };
+
+  const handleDelete = async (addrId) => {
+    setActionError("");
+    setActionFeedback("");
+    try {
+      await deleteAddress(addrId);
+      setDeletingId(null);
+      setActionFeedback("Address deleted successfully.");
+      setTimeout(() => setActionFeedback(""), 4000);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to delete address.",
+      );
+    }
+  };
+
+  return (
+    <section
+      className="profile-security-card"
+      aria-labelledby="saved-addresses-heading"
+    >
+      <div
+        className="profile-security-header"
+        style={{ justifyContent: "space-between" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <div className="profile-security-icon" aria-hidden="true">
+            <MapPin size={20} />
+          </div>
+          <div>
+            <h2 id="saved-addresses-heading">My Saved Addresses</h2>
+            <p>Manage your delivery locations for faster checkout.</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleOpenAdd}
+          className="profile-edit-trigger-btn"
+          aria-label="Add new address"
+        >
+          <Plus size={14} aria-hidden="true" />
+          <span>Add Address</span>
+        </button>
+      </div>
+
+      {actionFeedback && (
+        <div
+          className="profile-alert profile-alert-success"
+          role="status"
+          style={{ marginBottom: "16px" }}
+        >
+          <CheckCircle2 size={16} aria-hidden="true" />
+          <span>{actionFeedback}</span>
+        </div>
+      )}
+
+      {(actionError || addressError) && (
+        <div
+          className="profile-alert profile-alert-error"
+          role="alert"
+          style={{ marginBottom: "16px" }}
+        >
+          <AlertCircle size={16} aria-hidden="true" />
+          <span>{actionError || addressError}</span>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="address-empty-state">
+          <span className="profile-btn-spinner" aria-hidden="true" />
+          <p>Loading your saved addresses...</p>
+        </div>
+      ) : addresses.length === 0 ? (
+        <div className="address-empty-state">
+          <div className="address-empty-icon" aria-hidden="true">
+            <MapPin size={28} />
+          </div>
+          <h3>No saved addresses</h3>
+          <p>You haven't saved any delivery addresses yet.</p>
+          <button
+            type="button"
+            className="profile-save-btn"
+            onClick={handleOpenAdd}
+            style={{ marginTop: "12px", width: "auto" }}
+          >
+            <Plus size={16} aria-hidden="true" />
+            <span>Add Your First Address</span>
+          </button>
+        </div>
+      ) : (
+        <div className="address-card-list">
+          {addresses.map((addr) => {
+            const isSelected = selectedAddress?.id === addr.id;
+            const Icon = getAddressLabelIcon(addr.label);
+
+            return (
+              <div key={addr.id} className="address-book-card">
+                <div className="address-book-card-main">
+                  <div className="address-icon-box">
+                    <Icon size={18} aria-hidden="true" />
+                  </div>
+
+                  <div className="address-book-details">
+                    <div className="address-item-topline">
+                      <span className="address-item-label">{addr.label}</span>
+                      {addr.isDefault && (
+                        <span className="address-badge-default">Default</span>
+                      )}
+                      {isSelected && (
+                        <span className="address-badge-selected">
+                          <Check size={11} aria-hidden="true" />
+                          Selected
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="address-item-text">{addr.fullAddress}</p>
+
+                    {(addr.city || addr.state || addr.postalCode) && (
+                      <p className="address-item-subtext">
+                        {[addr.city, addr.state, addr.postalCode]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
+                    )}
+
+                    {addr.deliveryInstructions && (
+                      <p className="address-item-instructions">
+                        Note: {addr.deliveryInstructions}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {deletingId === addr.id ? (
+                  <div className="address-delete-confirm-box">
+                    <p>Delete this address?</p>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button
+                        type="button"
+                        className="address-confirm-del-btn"
+                        onClick={() => handleDelete(addr.id)}
+                      >
+                        Yes, Delete
+                      </button>
+                      <button
+                        type="button"
+                        className="address-cancel-del-btn"
+                        onClick={() => setDeletingId(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="address-book-actions">
+                    {!isSelected && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          selectAddress(addr);
+                          setActionFeedback(
+                            `Selected "${addr.label}" as current delivery address.`,
+                          );
+                          setTimeout(() => setActionFeedback(""), 3000);
+                        }}
+                        className="address-action-text-btn"
+                      >
+                        Deliver Here
+                      </button>
+                    )}
+
+                    {!addr.isDefault && (
+                      <button
+                        type="button"
+                        onClick={() => handleSetDefault(addr)}
+                        className="address-action-text-btn"
+                      >
+                        Set as Default
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEdit(addr)}
+                      className="address-action-icon-btn"
+                      title="Edit address"
+                      aria-label={`Edit ${addr.label} address`}
+                    >
+                      <Edit2 size={15} aria-hidden="true" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDeletingId(addr.id)}
+                      className="address-action-icon-btn is-delete"
+                      title="Delete address"
+                      aria-label={`Delete ${addr.label} address`}
+                    >
+                      <Trash2 size={15} aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {isFormOpen && (
+        <AddressFormModal
+          isOpen={isFormOpen}
+          onClose={() => {
+            setIsFormOpen(false);
+            setEditingAddress(null);
+          }}
+          initialData={editingAddress}
+          onSuccess={() => {
+            setActionFeedback(
+              editingAddress
+                ? "Address updated successfully."
+                : "New address added successfully.",
+            );
+            setTimeout(() => setActionFeedback(""), 4000);
+          }}
+        />
+      )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 3. Customer Preferences (Device-Only, localStorage)
 // ---------------------------------------------------------------------------
 const PREFERENCES_STORAGE_KEY = "hh_customer_preferences";
 
@@ -649,6 +939,7 @@ export default function Profile({ cartItems = [] }) {
           {user ? (
             <>
               <CustomerProfileCard user={user} />
+              <SavedAddressesSection />
               <CustomerPreferencesSection />
               <ChangePasswordSection />
             </>

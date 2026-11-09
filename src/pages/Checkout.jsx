@@ -16,6 +16,7 @@ import Navbar from "../components/common/Navbar.jsx";
 import Footer from "../components/common/Footer.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
+import { useAddress } from "../context/AddressContext.jsx";
 import {
   createCustomerAddress,
   createPaymentOrder,
@@ -172,26 +173,22 @@ export default function Checkout({ cartItems = [], onClearCart }) {
   const [submitError, setSubmitError] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(null);
 
-  // Fetch saved customer addresses
-  useEffect(() => {
-    let isCurrent = true;
-    fetchCustomerAddresses()
-      .then((addresses) => {
-        if (!isCurrent) return;
-        setSavedAddresses(addresses);
-        const defaultAddr = addresses.find((a) => a.isDefault) || addresses[0];
-        if (defaultAddr && defaultAddr.fullAddress) {
-          setDeliveryAddress(defaultAddr.fullAddress);
-        }
-      })
-      .catch(() => {
-        // Fallback: user can manually type address
-      });
+  const {
+    addresses: contextAddresses,
+    selectedAddress,
+    selectAddress,
+    openAddressSelector,
+  } = useAddress();
 
-    return () => {
-      isCurrent = false;
-    };
-  }, []);
+  // Sync delivery address with selectedAddress from centralized AddressContext
+  useEffect(() => {
+    if (selectedAddress?.fullAddress) {
+      setDeliveryAddress(selectedAddress.fullAddress);
+      if (selectedAddress.deliveryInstructions) {
+        setCustomerNote((prev) => prev || selectedAddress.deliveryInstructions);
+      }
+    }
+  }, [selectedAddress]);
 
   const cartSubtotal = activeCartItems.reduce(
     (total, item) => total + (item.price || 0) * (item.quantity || 1),
@@ -535,23 +532,36 @@ export default function Checkout({ cartItems = [], onClearCart }) {
                     Delivery Address
                   </h2>
 
-                  {savedAddresses.length > 0 && (
+                  {(contextAddresses?.length > 0 || savedAddresses.length > 0) && (
                     <div className="mb-4">
-                      <p className="text-xs font-semibold text-[#746C61] mb-2">
-                        Choose from saved addresses:
-                      </p>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-[#746C61]">
+                          Choose from saved addresses:
+                        </p>
+                        <button
+                          type="button"
+                          onClick={openAddressSelector}
+                          className="text-xs font-semibold text-[#c92332] hover:underline"
+                        >
+                          Manage / Add Addresses
+                        </button>
+                      </div>
                       <div className="flex flex-wrap gap-2">
-                        {savedAddresses.map((addr) => (
+                        {(contextAddresses?.length ? contextAddresses : savedAddresses).map((addr) => (
                           <button
                             key={addr.id}
                             type="button"
                             disabled={isSubmitting}
                             onClick={() => {
+                              selectAddress(addr);
                               setDeliveryAddress(addr.fullAddress);
+                              if (addr.deliveryInstructions) {
+                                setCustomerNote(addr.deliveryInstructions);
+                              }
                               setAddressError("");
                             }}
                             className={`text-xs px-3 py-1.5 rounded-lg border text-left transition ${
-                              deliveryAddress === addr.fullAddress
+                              selectedAddress?.id === addr.id || deliveryAddress === addr.fullAddress
                                 ? "border-[#c92332] bg-[#fff4e2] text-[#c92332] font-semibold"
                                 : "border-[#eee4d6] bg-white text-[#5F584F] hover:bg-[#fffaf2]"
                             }`}

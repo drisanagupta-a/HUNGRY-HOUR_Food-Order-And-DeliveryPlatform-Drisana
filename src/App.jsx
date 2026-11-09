@@ -15,6 +15,7 @@ import VerifyOtp from "./pages/VerifyOtp.jsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 import Intro from "./pages/Intro.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { AddressProvider } from "./context/AddressContext.jsx";
 import { CartProvider, useCart } from "./context/CartContext.jsx";
 import { FavoritesProvider } from "./context/FavoritesContext.jsx";
 
@@ -167,11 +168,13 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <FavoritesProvider>
-        <CartProvider>
-          <AppRoutes />
-        </CartProvider>
-      </FavoritesProvider>
+      <AddressProvider>
+        <FavoritesProvider>
+          <CartProvider>
+            <AppRoutes />
+          </CartProvider>
+        </FavoritesProvider>
+      </AddressProvider>
     </AuthProvider>
   );
 }

@@ -69,22 +69,14 @@ export async function fetchOrderById(orderId) {
   );
 }
 
-/**
- * Fetches the authenticated customer's saved delivery addresses.
- * Endpoint: GET /api/customer/addresses
- */
-export async function fetchCustomerAddresses() {
-  const data = await requestJson("/api/customer/addresses", "GET", undefined, true);
-  return extractArray(data);
-}
-
-/**
- * Saves a new delivery address for the authenticated customer.
- * Endpoint: POST /api/customer/addresses
- */
-export async function createCustomerAddress(addressData) {
-  return requestJson("/api/customer/addresses", "POST", addressData, true);
-}
+export {
+  fetchCustomerAddresses,
+  createCustomerAddress,
+  getCustomerAddress,
+  updateCustomerAddress,
+  deleteCustomerAddress,
+  setDefaultCustomerAddress,
+} from "./addressService.js";
 
 /**
  * Creates a Razorpay payment order for an existing order.
